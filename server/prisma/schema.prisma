@@ -1,0 +1,88 @@
+// Prisma Schema File
+// This file defines your database structure.
+// Every time you change this file, you run `npx prisma migrate dev`
+// and Prisma automatically updates your actual database to match.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MODEL
+// ============================================
+// Stores registered user accounts
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  password     String   // Hashed with bcrypt - NEVER store plain text passwords
+  name         String
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations - a user can have many capsules and many refresh tokens
+  capsules     Capsule[]
+  refreshTokens RefreshToken[]
+
+  @@map("users") // Table name in PostgreSQL will be "users" (lowercase)
+}
+
+// ============================================
+// CAPSULE MODEL
+// ============================================
+// The core of our application - a time capsule
+model Capsule {
+  id           String        @id @default(uuid())
+  title        String
+  content      String?       // Text content (may be encrypted)
+  
+  status       CapsuleStatus @default(LOCKED)
+  unlockAt     DateTime      @map("unlock_at")  // When this capsule should open
+  openedAt     DateTime?     @map("opened_at")   // When it was actually opened
+  
+  isEncrypted  Boolean       @default(false) @map("is_encrypted")
+  isPublic     Boolean       @default(false) @map("is_public")
+
+  // Who created this capsule
+  creatorId    String        @map("creator_id")
+  creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@map("capsules")
+}
+
+// ============================================
+// REFRESH TOKEN MODEL
+// ============================================
+// Stores active refresh tokens for secure authentication
+// Why a separate table? So we can:
+// 1. Revoke specific tokens (logout from one device)
+// 2. Revoke ALL tokens (logout everywhere)
+// 3. Track when tokens were last used
+model RefreshToken {
+  id          String   @id @default(uuid())
+  token       String   @unique
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+enum CapsuleStatus {
+  LOCKED    // Not yet time to open
+  UNLOCKED  // Time has passed, ready to be viewed
+  OPENED    // Has been viewed by the recipient
+}
