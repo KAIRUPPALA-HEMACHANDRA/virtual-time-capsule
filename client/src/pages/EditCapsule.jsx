@@ -67,10 +67,15 @@ function EditCapsule() {
     }));
   }
 
-  function getMinDate() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().slice(0, 16);
+  // function getMinDate() {
+  //   const tomorrow = new Date();
+  //   tomorrow.setDate(tomorrow.getDate() + 1);
+  //   return tomorrow.toISOString().slice(0, 16);
+  // }
+    function getMinDate() {
+    const fiveMinFromNow = new Date();
+    fiveMinFromNow.setMinutes(fiveMinFromNow.getMinutes() + 5);
+    return fiveMinFromNow.toISOString().slice(0, 16);
   }
 
   async function handleSubmit(e) {

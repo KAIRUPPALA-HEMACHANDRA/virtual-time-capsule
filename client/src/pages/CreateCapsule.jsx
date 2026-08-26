@@ -65,10 +65,15 @@ function CreateCapsule() {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   }
 
-  function getMinDate() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().slice(0, 16);
+  // function getMinDate() {
+  //   const tomorrow = new Date();
+  //   tomorrow.setDate(tomorrow.getDate() + 1);
+  //   return tomorrow.toISOString().slice(0, 16);
+  // }
+    function getMinDate() {
+    const fiveMinFromNow = new Date();
+    fiveMinFromNow.setMinutes(fiveMinFromNow.getMinutes() + 5);
+    return fiveMinFromNow.toISOString().slice(0, 16);
   }
 
   // Get icon based on file type

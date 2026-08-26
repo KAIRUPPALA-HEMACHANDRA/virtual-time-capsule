@@ -1,43 +1,52 @@
 const app = require('./app');
 const { PORT, NODE_ENV } = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
+const { startQueue, stopQueue } = require('./config/queue');
+const { registerWorkers } = require('./jobs/capsuleJobs');
 
 /**
- * SERVER STARTUP
+ * SERVER STARTUP — with Job Queue
  * 
- * This is the entry point of our backend application.
- * It does three things in order:
- * 1. Connects to the PostgreSQL database
- * 2. Starts the Express HTTP server
- * 3. Sets up graceful shutdown handlers
+ * Startup order:
+ * 1. Connect to PostgreSQL database
+ * 2. Start the pg-boss job queue
+ * 3. Register job workers (capsule unlock, etc.)
+ * 4. Start the Express HTTP server
+ * 5. Set up graceful shutdown handlers
  */
 async function startServer() {
   try {
-    // 1. Connect to database first (if this fails, no point starting the server)
+    // 1. Connect to database
     await connectDB();
 
-    // 2. Start the HTTP server
+    // 2. Start the job queue
+    const boss = await startQueue();
+
+    // 3. Register workers
+    await registerWorkers(boss);
+
+    // 4. Start HTTP server
     const server = app.listen(PORT, () => {
       console.log(`\n🕰️  Virtual Time Capsule Server`);
       console.log(`   Environment : ${NODE_ENV}`);
       console.log(`   Port        : ${PORT}`);
       console.log(`   URL         : http://localhost:${PORT}`);
       console.log(`   Health      : http://localhost:${PORT}/api/health`);
+      console.log(`   Queue       : pg-boss (PostgreSQL-backed)`);
       console.log(`   Ready at    : ${new Date().toLocaleString()}\n`);
     });
 
-    // 3. Graceful shutdown handlers
-    // When the server is stopped (Ctrl+C or process kill), clean up properly
+    // 5. Graceful shutdown
     const gracefulShutdown = async (signal) => {
       console.log(`\n${signal} received. Shutting down gracefully...`);
-      
+
       server.close(async () => {
+        await stopQueue();
         await disconnectDB();
         console.log('👋 Server shut down complete.');
         process.exit(0);
       });
 
-      // Force shutdown if graceful shutdown takes too long (10 seconds)
       setTimeout(() => {
         console.error('⚠️  Forced shutdown - graceful shutdown timed out');
         process.exit(1);
@@ -47,7 +56,6 @@ async function startServer() {
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-    // Handle unhandled promise rejections (programming errors)
     process.on('unhandledRejection', (err) => {
       console.error('🔴 UNHANDLED REJECTION:', err.message);
       server.close(() => process.exit(1));

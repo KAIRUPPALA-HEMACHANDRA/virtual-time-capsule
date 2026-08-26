@@ -2,14 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const { prisma } = require('../config/db');
 const AppError = require('../utils/AppError');
+const { getQueue } = require('../config/queue');
+const { scheduleCapsuleUnlock, cancelCapsuleUnlock } = require('../jobs/capsuleJobs');
 
 /**
- * Capsule Service — with Attachment Support
+ * Capsule Service — with Scheduled Delivery
+ * 
+ * When a capsule is created → a delayed job is scheduled
+ * When a capsule is updated (new unlock date) → old job cancelled, new one scheduled
+ * When a capsule is deleted → the scheduled job is cancelled
  */
 
-/**
- * CREATE A NEW CAPSULE (with optional file attachments)
- */
+// ============================================
+// CREATE
+// ============================================
 async function createCapsule(userId, data, files = []) {
   const capsule = await prisma.capsule.create({
     data: {
@@ -18,7 +24,6 @@ async function createCapsule(userId, data, files = []) {
       unlockAt: new Date(data.unlockAt),
       isPublic: data.isPublic === 'true' || data.isPublic === true,
       creatorId: userId,
-      // Create attachment records for each uploaded file
       attachments: {
         create: files.map((file) => ({
           filename: file.filename,
@@ -30,19 +35,26 @@ async function createCapsule(userId, data, files = []) {
       },
     },
     include: {
-      creator: {
-        select: { id: true, name: true, email: true },
-      },
+      creator: { select: { id: true, name: true, email: true } },
       attachments: true,
     },
   });
 
+  // Schedule the unlock job
+  try {
+    const boss = getQueue();
+    await scheduleCapsuleUnlock(boss, capsule.id, capsule.unlockAt);
+  } catch (error) {
+    console.error('⚠️ Failed to schedule unlock job:', error.message);
+    // Don't fail the capsule creation — the auto-unlock fallback still works
+  }
+
   return capsule;
 }
 
-/**
- * GET ALL CAPSULES FOR A USER
- */
+// ============================================
+// GET ALL CAPSULES
+// ============================================
 async function getUserCapsules(userId) {
   await autoUnlockCapsules(userId);
 
@@ -50,12 +62,8 @@ async function getUserCapsules(userId) {
     where: { creatorId: userId },
     orderBy: { createdAt: 'desc' },
     include: {
-      creator: {
-        select: { id: true, name: true },
-      },
-      attachments: {
-        select: { id: true, mimetype: true, originalName: true },
-      },
+      creator: { select: { id: true, name: true } },
+      attachments: { select: { id: true, mimetype: true, originalName: true } },
     },
   });
 
@@ -64,11 +72,7 @@ async function getUserCapsules(userId) {
       return {
         ...capsule,
         content: null,
-        attachments: capsule.attachments.map((a) => ({
-          id: a.id,
-          mimetype: a.mimetype,
-          // Don't expose file paths for locked capsules
-        })),
+        attachments: capsule.attachments.map((a) => ({ id: a.id, mimetype: a.mimetype })),
         isLocked: true,
         timeRemaining: getTimeRemaining(capsule.unlockAt),
         attachmentCount: capsule.attachments.length,
@@ -83,29 +87,24 @@ async function getUserCapsules(userId) {
   });
 }
 
-/**
- * GET A SINGLE CAPSULE BY ID
- */
+// ============================================
+// GET SINGLE CAPSULE
+// ============================================
 async function getCapsuleById(capsuleId, userId) {
   const capsule = await prisma.capsule.findUnique({
     where: { id: capsuleId },
     include: {
-      creator: {
-        select: { id: true, name: true, email: true },
-      },
+      creator: { select: { id: true, name: true, email: true } },
       attachments: true,
     },
   });
 
-  if (!capsule) {
-    throw new AppError('Capsule not found', 404);
-  }
-
+  if (!capsule) throw new AppError('Capsule not found', 404);
   if (capsule.creatorId !== userId && !capsule.isPublic) {
     throw new AppError('You do not have permission to view this capsule', 403);
   }
 
-  // Auto-unlock if time has passed
+  // Auto-unlock if time passed
   if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt) {
     const updated = await prisma.capsule.update({
       where: { id: capsuleId },
@@ -115,21 +114,14 @@ async function getCapsuleById(capsuleId, userId) {
         attachments: true,
       },
     });
-
-    return {
-      ...updated,
-      isLocked: false,
-      timeRemaining: null,
-      attachmentCount: updated.attachments.length,
-    };
+    return { ...updated, isLocked: false, timeRemaining: null, attachmentCount: updated.attachments.length };
   }
 
-  // If still locked, owner sees content but others don't
+  // Locked — owner sees content, others don't
   if (capsule.status === 'LOCKED') {
     return {
       ...capsule,
       content: capsule.creatorId === userId ? capsule.content : null,
-      // Owner sees attachment metadata, others see count only
       attachments: capsule.creatorId === userId
         ? capsule.attachments
         : capsule.attachments.map((a) => ({ id: a.id, mimetype: a.mimetype })),
@@ -139,7 +131,7 @@ async function getCapsuleById(capsuleId, userId) {
     };
   }
 
-  // Mark as opened on first view by creator
+  // Mark as opened on first view
   if (capsule.status === 'UNLOCKED' && capsule.creatorId === userId) {
     const opened = await prisma.capsule.update({
       where: { id: capsuleId },
@@ -149,30 +141,17 @@ async function getCapsuleById(capsuleId, userId) {
         attachments: true,
       },
     });
-
-    return {
-      ...opened,
-      isLocked: false,
-      timeRemaining: null,
-      attachmentCount: opened.attachments.length,
-    };
+    return { ...opened, isLocked: false, timeRemaining: null, attachmentCount: opened.attachments.length };
   }
 
-  return {
-    ...capsule,
-    isLocked: false,
-    timeRemaining: null,
-    attachmentCount: capsule.attachments.length,
-  };
+  return { ...capsule, isLocked: false, timeRemaining: null, attachmentCount: capsule.attachments.length };
 }
 
-/**
- * UPDATE A CAPSULE
- */
+// ============================================
+// UPDATE
+// ============================================
 async function updateCapsule(capsuleId, userId, data) {
-  const capsule = await prisma.capsule.findUnique({
-    where: { id: capsuleId },
-  });
+  const capsule = await prisma.capsule.findUnique({ where: { id: capsuleId } });
 
   if (!capsule) throw new AppError('Capsule not found', 404);
   if (capsule.creatorId !== userId) throw new AppError('You can only edit your own capsules', 403);
@@ -193,12 +172,23 @@ async function updateCapsule(capsuleId, userId, data) {
     },
   });
 
+  // If unlock date changed, reschedule the job
+  if (data.unlockAt !== undefined) {
+    try {
+      const boss = getQueue();
+      await cancelCapsuleUnlock(boss, capsuleId);
+      await scheduleCapsuleUnlock(boss, capsuleId, updated.unlockAt);
+    } catch (error) {
+      console.error('⚠️ Failed to reschedule unlock job:', error.message);
+    }
+  }
+
   return updated;
 }
 
-/**
- * DELETE A CAPSULE (and its files from disk)
- */
+// ============================================
+// DELETE
+// ============================================
 async function deleteCapsule(capsuleId, userId) {
   const capsule = await prisma.capsule.findUnique({
     where: { id: capsuleId },
@@ -208,29 +198,27 @@ async function deleteCapsule(capsuleId, userId) {
   if (!capsule) throw new AppError('Capsule not found', 404);
   if (capsule.creatorId !== userId) throw new AppError('You can only delete your own capsules', 403);
 
-  // Delete actual files from disk
+  // Delete files from disk
   for (const attachment of capsule.attachments) {
     const filePath = path.join(__dirname, '../../uploads', attachment.filename);
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch {
-      // File might already be deleted — that's fine
-    }
+    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch {}
   }
 
-  // Delete capsule (attachments cascade-delete automatically)
-  await prisma.capsule.delete({
-    where: { id: capsuleId },
-  });
+  // Cancel the scheduled unlock job
+  try {
+    const boss = getQueue();
+    await cancelCapsuleUnlock(boss, capsuleId);
+  } catch (error) {
+    console.error('⚠️ Failed to cancel unlock job:', error.message);
+  }
 
+  await prisma.capsule.delete({ where: { id: capsuleId } });
   return { message: 'Capsule deleted successfully' };
 }
 
-/**
- * DELETE A SINGLE ATTACHMENT
- */
+// ============================================
+// DELETE ATTACHMENT
+// ============================================
 async function deleteAttachment(attachmentId, userId) {
   const attachment = await prisma.attachment.findUnique({
     where: { id: attachmentId },
@@ -241,48 +229,32 @@ async function deleteAttachment(attachmentId, userId) {
   if (attachment.capsule.creatorId !== userId) throw new AppError('You can only delete your own attachments', 403);
   if (attachment.capsule.status !== 'LOCKED') throw new AppError('Cannot modify attachments of an opened capsule', 400);
 
-  // Delete file from disk
   const filePath = path.join(__dirname, '../../uploads', attachment.filename);
-  try {
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  } catch {
-    // Ignore
-  }
+  try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch {}
 
   await prisma.attachment.delete({ where: { id: attachmentId } });
-
   return { message: 'Attachment deleted' };
 }
 
 // ============================================
-// HELPER FUNCTIONS
+// HELPERS
 // ============================================
-
 async function autoUnlockCapsules(userId) {
   await prisma.capsule.updateMany({
-    where: {
-      creatorId: userId,
-      status: 'LOCKED',
-      unlockAt: { lte: new Date() },
-    },
+    where: { creatorId: userId, status: 'LOCKED', unlockAt: { lte: new Date() } },
     data: { status: 'UNLOCKED' },
   });
 }
 
 function getTimeRemaining(unlockAt) {
-  const now = new Date();
-  const unlock = new Date(unlockAt);
-  const diff = unlock.getTime() - now.getTime();
-
+  const diff = new Date(unlockAt).getTime() - Date.now();
   if (diff <= 0) return null;
-
   return {
     total: diff,
     days: Math.floor(diff / (1000 * 60 * 60 * 24)),
     hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
     minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
     seconds: Math.floor((diff % (1000 * 60)) / 1000),
-    readable: `${Math.floor(diff / (1000 * 60 * 60 * 24))}d`,
   };
 }
 
