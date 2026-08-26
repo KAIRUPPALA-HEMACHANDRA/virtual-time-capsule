@@ -2,18 +2,22 @@ const catchAsync = require('../utils/catchAsync');
 const capsuleService = require('../services/capsuleService');
 
 /**
- * Capsule Controller
+ * Capsule Controller — with File Upload Support
  * 
- * Maps HTTP endpoints to capsule service functions:
- *   POST   /api/capsules      → create a new capsule
- *   GET    /api/capsules      → list all your capsules
- *   GET    /api/capsules/:id  → view a single capsule
- *   PATCH  /api/capsules/:id  → update a capsule (only if locked)
- *   DELETE /api/capsules/:id  → delete a capsule
+ * When files are uploaded, Multer processes them BEFORE the controller runs.
+ * The uploaded file info is available in req.files (array of file objects).
+ * Text fields from the form are in req.body as usual.
+ * 
+ * NOTE: When sending files, the frontend uses FormData instead of JSON.
+ * Multer parses this automatically.
  */
 
 const createCapsule = catchAsync(async (req, res) => {
-  const capsule = await capsuleService.createCapsule(req.user.userId, req.body);
+  const capsule = await capsuleService.createCapsule(
+    req.user.userId,
+    req.body,
+    req.files || [] // Files uploaded via Multer
+  );
 
   res.status(201).json({
     status: 'success',
@@ -67,10 +71,20 @@ const deleteCapsule = catchAsync(async (req, res) => {
   });
 });
 
+const deleteAttachment = catchAsync(async (req, res) => {
+  await capsuleService.deleteAttachment(req.params.attachmentId, req.user.userId);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Attachment deleted successfully',
+  });
+});
+
 module.exports = {
   createCapsule,
   getMyCapsules,
   getCapsule,
   updateCapsule,
   deleteCapsule,
+  deleteAttachment,
 };

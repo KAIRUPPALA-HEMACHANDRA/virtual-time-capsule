@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import capsuleService from '../services/capsuleService';
 import Navbar from '../components/Navbar';
@@ -6,7 +6,10 @@ import toast from 'react-hot-toast';
 
 function CreateCapsule() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [files, setFiles] = useState([]);       // Actual File objects
+  const [previews, setPreviews] = useState([]);   // Preview URLs for display
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -22,27 +25,87 @@ function CreateCapsule() {
     }));
   }
 
-  // Calculate minimum date (tomorrow)
+  function handleFileSelect(e) {
+    const selectedFiles = Array.from(e.target.files);
+
+    if (files.length + selectedFiles.length > 5) {
+      toast.error('Maximum 5 files per capsule');
+      return;
+    }
+
+    // Validate file sizes
+    for (const file of selectedFiles) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`"${file.name}" exceeds 10MB limit`);
+        return;
+      }
+    }
+
+    // Create preview URLs for images
+    const newPreviews = selectedFiles.map((file) => ({
+      name: file.name,
+      size: (file.size / 1024 / 1024).toFixed(2) + ' MB',
+      type: file.type,
+      url: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+    }));
+
+    setFiles((prev) => [...prev, ...selectedFiles]);
+    setPreviews((prev) => [...prev, ...newPreviews]);
+
+    // Reset the file input so the same file can be selected again
+    e.target.value = '';
+  }
+
+  function removeFile(index) {
+    // Revoke the preview URL to free memory
+    if (previews[index].url) {
+      URL.revokeObjectURL(previews[index].url);
+    }
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  }
+
   function getMinDate() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
+    return tomorrow.toISOString().slice(0, 16);
+  }
+
+  // Get icon based on file type
+  function getFileIcon(mimetype) {
+    if (mimetype.startsWith('image/')) return '🖼️';
+    if (mimetype.startsWith('audio/')) return '🎵';
+    if (mimetype.startsWith('video/')) return '🎬';
+    if (mimetype === 'application/pdf') return '📄';
+    return '📎';
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
+
+    if (!formData.title.trim()) {
+      toast.error('Title is required');
+      return;
+    }
+    if (!formData.unlockAt) {
+      toast.error('Unlock date is required');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Convert local datetime to ISO string
       const unlockDate = new Date(formData.unlockAt).toISOString();
 
-      await capsuleService.createCapsule({
-        title: formData.title,
-        content: formData.content,
-        unlockAt: unlockDate,
-        isPublic: formData.isPublic,
-      });
+      await capsuleService.createCapsule(
+        {
+          title: formData.title,
+          content: formData.content,
+          unlockAt: unlockDate,
+          isPublic: formData.isPublic,
+        },
+        files
+      );
 
       toast.success('Time capsule created and sealed! 🔒');
       navigate('/dashboard');
@@ -59,21 +122,16 @@ function CreateCapsule() {
       <Navbar />
 
       <div className="container page">
-        <div style={{
-          maxWidth: '600px',
-          margin: '0 auto',
-        }}>
-          {/* Header */}
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
           <div style={{ marginBottom: '2rem' }}>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>
               🕰️ Create a Time Capsule
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-              Write a message, pick a future date, and seal it away.
+              Write a message, attach memories, pick a future date, and seal it away.
             </p>
           </div>
 
-          {/* Form Card */}
           <form
             onSubmit={handleSubmit}
             style={{
@@ -105,17 +163,139 @@ function CreateCapsule() {
                 placeholder="Write a message to your future self, a friend, or the world..."
                 value={formData.content}
                 onChange={handleChange}
-                rows={6}
+                rows={5}
                 maxLength={10000}
               />
-              <p style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-muted)',
-                textAlign: 'right',
-                marginTop: '0.3rem',
-              }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right', marginTop: '0.3rem' }}>
                 {formData.content.length} / 10,000
               </p>
+            </div>
+
+            {/* File Upload Section */}
+            <div className="form-group">
+              <label className="form-label">Attachments (optional)</label>
+
+              {/* Upload Button */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                multiple
+                accept="image/*,audio/*,video/*,.pdf"
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current.click()}
+                disabled={files.length >= 5}
+                style={{
+                  width: '100%',
+                  padding: '1.25rem',
+                  background: 'transparent',
+                  border: '2px dashed var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: files.length >= 5 ? 'var(--text-muted)' : 'var(--accent-purple)',
+                  cursor: files.length >= 5 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.9rem',
+                  transition: 'all 0.2s',
+                }}
+                onMouseOver={(e) => {
+                  if (files.length < 5) e.target.style.borderColor = 'var(--accent-purple)';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.borderColor = 'var(--border-subtle)';
+                }}
+              >
+                {files.length >= 5
+                  ? 'Maximum 5 files reached'
+                  : `📎 Click to add files (${files.length}/5)`}
+              </button>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                Images, audio, video, PDF — max 10MB each
+              </p>
+
+              {/* File Previews */}
+              {previews.length > 0 && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                  gap: '0.75rem',
+                  marginTop: '1rem',
+                }}>
+                  {previews.map((preview, index) => (
+                    <div key={index} style={{
+                      position: 'relative',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-sm)',
+                      overflow: 'hidden',
+                    }}>
+                      {/* Image preview or icon */}
+                      {preview.url ? (
+                        <img
+                          src={preview.url}
+                          alt={preview.name}
+                          style={{
+                            width: '100%',
+                            height: '100px',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <div style={{
+                          height: '100px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '2rem',
+                        }}>
+                          {getFileIcon(preview.type)}
+                        </div>
+                      )}
+
+                      {/* File info */}
+                      <div style={{ padding: '0.5rem' }}>
+                        <p style={{
+                          fontSize: '0.7rem',
+                          color: 'var(--text-secondary)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}>
+                          {preview.name}
+                        </p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                          {preview.size}
+                        </p>
+                      </div>
+
+                      {/* Remove button */}
+                      <button
+                        type="button"
+                        onClick={() => removeFile(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '4px',
+                          right: '4px',
+                          width: '22px',
+                          height: '22px',
+                          borderRadius: '50%',
+                          background: 'rgba(248, 113, 113, 0.9)',
+                          color: '#fff',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '0.7rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="form-group">
@@ -130,11 +310,7 @@ function CreateCapsule() {
                 required
                 style={{ colorScheme: 'dark' }}
               />
-              <p style={{
-                fontSize: '0.75rem',
-                color: 'var(--text-muted)',
-                marginTop: '0.3rem',
-              }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
                 The capsule will be sealed until this date. Nobody can read it before then.
               </p>
             </div>
@@ -153,22 +329,13 @@ function CreateCapsule() {
                   name="isPublic"
                   checked={formData.isPublic}
                   onChange={handleChange}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    accentColor: 'var(--accent-purple)',
-                  }}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--accent-purple)' }}
                 />
                 Make this capsule public (visible on the public wall after it opens)
               </label>
             </div>
 
-            {/* Buttons */}
-            <div style={{
-              display: 'flex',
-              gap: '1rem',
-              marginTop: '1.5rem',
-            }}>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
               <button
                 type="button"
                 className="btn btn-secondary"

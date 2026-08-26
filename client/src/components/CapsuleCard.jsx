@@ -1,14 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Countdown from './Countdown';
 
-/**
- * CapsuleCard
- * 
- * Displays a capsule in the dashboard list.
- * Shows title, status badge, countdown (if locked), and creation date.
- * Clicking it navigates to the capsule detail page.
- */
-
 function CapsuleCard({ capsule }) {
   const navigate = useNavigate();
 
@@ -19,6 +11,7 @@ function CapsuleCard({ capsule }) {
   };
 
   const status = statusConfig[capsule.status] || statusConfig.LOCKED;
+  const attachmentCount = capsule.attachmentCount || capsule.attachments?.length || 0;
 
   return (
     <div
@@ -42,7 +35,7 @@ function CapsuleCard({ capsule }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Top row: title + status badge */}
+      {/* Top row: title + status */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -50,15 +43,9 @@ function CapsuleCard({ capsule }) {
         marginBottom: '0.75rem',
         gap: '1rem',
       }}>
-        <h3 style={{
-          fontSize: '1.1rem',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          flex: 1,
-        }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)', flex: 1 }}>
           {capsule.title}
         </h3>
-
         <span style={{
           fontSize: '0.75rem',
           padding: '0.25rem 0.75rem',
@@ -92,15 +79,28 @@ function CapsuleCard({ capsule }) {
         )
       )}
 
-      {/* Bottom row: dates */}
+      {/* Bottom row: dates + attachment count */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
+        alignItems: 'center',
         fontSize: '0.8rem',
         color: 'var(--text-muted)',
       }}>
         <span>Created: {new Date(capsule.createdAt).toLocaleDateString()}</span>
-        <span>Opens: {new Date(capsule.unlockAt).toLocaleDateString()}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {attachmentCount > 0 && (
+            <span style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.25rem',
+              color: 'var(--text-secondary)',
+            }}>
+              📎 {attachmentCount}
+            </span>
+          )}
+          <span>Opens: {new Date(capsule.unlockAt).toLocaleDateString()}</span>
+        </div>
       </div>
     </div>
   );

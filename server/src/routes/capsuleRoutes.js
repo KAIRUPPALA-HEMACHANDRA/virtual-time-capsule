@@ -2,30 +2,33 @@ const express = require('express');
 const capsuleController = require('../controllers/capsuleController');
 const { protect } = require('../middleware/auth');
 const validate = require('../middleware/validate');
-const { createCapsuleSchema, updateCapsuleSchema } = require('../utils/capsuleValidators');
+const { updateCapsuleSchema } = require('../utils/capsuleValidators');
+const upload = require('../middleware/upload');
 
 /**
- * Capsule Routes
+ * Capsule Routes — with File Upload
  * 
- * ALL capsule routes are protected — you must be logged in.
- * The protect middleware runs first on every route.
+ * POST /api/capsules uses upload.array('files', 5) which tells Multer:
+ * "Accept up to 5 files from the form field named 'files'"
  * 
- *   POST   /api/capsules      → create a new capsule
- *   GET    /api/capsules      → list all your capsules
- *   GET    /api/capsules/:id  → view a single capsule
- *   PATCH  /api/capsules/:id  → update a capsule
- *   DELETE /api/capsules/:id  → delete a capsule
+ * When files are included, the data comes as FormData (not JSON),
+ * so we skip Zod validation on create (Multer handles the parsing).
+ * The service layer validates the required fields instead.
  */
 
 const router = express.Router();
 
-// All routes below require authentication
 router.use(protect);
 
-router.post('/', validate(createCapsuleSchema), capsuleController.createCapsule);
+// Create capsule with optional file uploads (up to 5 files)
+router.post('/', upload.array('files', 5), capsuleController.createCapsule);
+
 router.get('/', capsuleController.getMyCapsules);
 router.get('/:id', capsuleController.getCapsule);
 router.patch('/:id', validate(updateCapsuleSchema), capsuleController.updateCapsule);
 router.delete('/:id', capsuleController.deleteCapsule);
+
+// Delete a single attachment from a capsule
+router.delete('/:id/attachments/:attachmentId', capsuleController.deleteAttachment);
 
 module.exports = router;
