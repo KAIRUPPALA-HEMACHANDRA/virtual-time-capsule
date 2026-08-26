@@ -121,11 +121,11 @@ async function getCapsuleById(capsuleId, userId) {
     };
   }
 
-  // If still locked, hide content
+    // If still locked, hide content from non-owners
   if (capsule.status === 'LOCKED') {
     return {
       ...capsule,
-      content: null,
+      content: capsule.creatorId === userId ? capsule.content : null,
       isLocked: true,
       timeRemaining: getTimeRemaining(capsule.unlockAt),
     };

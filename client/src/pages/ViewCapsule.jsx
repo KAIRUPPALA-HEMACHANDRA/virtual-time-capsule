@@ -212,7 +212,7 @@ function ViewCapsule() {
               {/* Action Buttons */}
               <div style={{
                 display: 'flex',
-                gap: '1rem',
+                gap: '0.75rem',
                 marginTop: '2rem',
               }}>
                 <button
@@ -222,13 +222,29 @@ function ViewCapsule() {
                 >
                   ← Dashboard
                 </button>
+
+                {/* Edit button — only for locked capsules */}
+                {isLocked && (
+                  <button
+                    onClick={() => navigate(`/capsule/${id}/edit`)}
+                    className="btn btn-secondary"
+                    style={{
+                      flex: 1,
+                      borderColor: 'rgba(167, 139, 250, 0.3)',
+                      color: 'var(--accent-purple)',
+                    }}
+                  >
+                    ✏️ Edit
+                  </button>
+                )}
+
                 <button
                   onClick={handleDelete}
                   className="btn btn-danger"
                   disabled={deleting}
                   style={{ flex: 1 }}
                 >
-                  {deleting ? 'Deleting...' : '🗑️ Delete Capsule'}
+                  {deleting ? 'Deleting...' : '🗑️ Delete'}
                 </button>
               </div>
             </div>
