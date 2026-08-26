@@ -1,12 +1,23 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import capsuleService from '../services/capsuleService';
+import authService from '../services/authService';
 import Navbar from '../components/Navbar';
+import toast from 'react-hot-toast';
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, locked: 0, unlocked: 0, opened: 0 });
   const [loading, setLoading] = useState(true);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   useEffect(() => {
     fetchStats();
@@ -16,7 +27,6 @@ function Profile() {
     try {
       const response = await capsuleService.getMyCapsules();
       const capsules = response.data.capsules;
-
       setStats({
         total: capsules.length,
         locked: capsules.filter((c) => c.status === 'LOCKED').length,
@@ -24,24 +34,48 @@ function Profile() {
         opened: capsules.filter((c) => c.status === 'OPENED').length,
       });
     } catch {
-      // Stats are non-critical, fail silently
+      // Non-critical
     } finally {
       setLoading(false);
     }
   }
 
-  // Calculate how long the user has been a member
   function getMemberDuration() {
     if (!user?.createdAt) return 'Just joined';
     const created = new Date(user.createdAt);
     const now = new Date();
     const diffDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
-
     if (diffDays === 0) return 'Joined today';
     if (diffDays === 1) return 'Joined yesterday';
     if (diffDays < 30) return `${diffDays} days ago`;
     if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
     return `${Math.floor(diffDays / 365)} years ago`;
+  }
+
+  async function handlePasswordChange(e) {
+    e.preventDefault();
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await authService.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      toast.success('Password changed! Please log in again.');
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to change password');
+    } finally {
+      setPasswordLoading(false);
+    }
   }
 
   const statCards = [
@@ -58,7 +92,7 @@ function Profile() {
       <div className="container page">
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
 
-          {/* Profile Header Card */}
+          {/* Profile Header */}
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border-subtle)',
@@ -67,7 +101,6 @@ function Profile() {
             textAlign: 'center',
             marginBottom: '1.5rem',
           }}>
-            {/* Avatar Circle */}
             <div style={{
               width: '80px',
               height: '80px',
@@ -83,25 +116,14 @@ function Profile() {
             }}>
               {user?.name?.charAt(0)?.toUpperCase() || '?'}
             </div>
-
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-              {user?.name}
-            </h1>
-
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-              {user?.email}
-            </p>
-
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '0.25rem' }}>{user?.name}</h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{user?.email}</p>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-              🗓️ Member since {getMemberDuration()} · {new Date(user?.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
+              🗓️ Member since {getMemberDuration()} · {new Date(user?.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
 
-          {/* Stats Grid */}
+          {/* Stats */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(2, 1fr)',
@@ -117,73 +139,121 @@ function Profile() {
                 textAlign: 'center',
               }}>
                 <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{stat.icon}</div>
-                <div style={{
-                  fontSize: '2rem',
-                  fontWeight: 700,
-                  color: stat.color,
-                  lineHeight: 1,
-                  marginBottom: '0.3rem',
-                }}>
+                <div style={{ fontSize: '2rem', fontWeight: 700, color: stat.color, lineHeight: 1, marginBottom: '0.3rem' }}>
                   {loading ? '-' : stat.value}
                 </div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  {stat.label}
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Account Details */}
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.5rem 2rem',
+            marginBottom: '1.5rem',
+          }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>Account Details</h2>
+
+            {[
+              { label: 'Full Name', value: user?.name },
+              { label: 'Email Address', value: user?.email },
+              { label: 'User ID', value: user?.id, mono: true },
+            ].map((item, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingBottom: '1rem',
+                marginBottom: i < 2 ? '1rem' : 0,
+                borderBottom: i < 2 ? '1px solid var(--border-subtle)' : 'none',
+              }}>
+                <div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>{item.label}</span>
+                  <span style={{
+                    fontSize: item.mono ? '0.8rem' : '0.95rem',
+                    color: item.mono ? 'var(--text-muted)' : 'var(--text-primary)',
+                    fontFamily: item.mono ? 'monospace' : 'inherit',
+                  }}>
+                    {item.value}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Account Details Card */}
+          {/* Change Password Section */}
           <div style={{
             background: 'var(--bg-card)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)',
             padding: '1.5rem 2rem',
           }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
-              Account Details
-            </h2>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingBottom: '1rem',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Full Name</span>
-                  <span style={{ fontSize: '0.95rem' }}>{user?.name}</span>
-                </div>
-              </div>
-
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingBottom: '1rem',
-                borderBottom: '1px solid var(--border-subtle)',
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Email Address</span>
-                  <span style={{ fontSize: '0.95rem' }}>{user?.email}</span>
-                </div>
-              </div>
-
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
-                <div>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>User ID</span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                    {user?.id}
-                  </span>
-                </div>
-              </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: showPasswordForm ? '1.25rem' : 0,
+            }}>
+              <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Security</h2>
+              <button
+                onClick={() => setShowPasswordForm(!showPasswordForm)}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}
+              >
+                {showPasswordForm ? 'Cancel' : '🔑 Change Password'}
+              </button>
             </div>
+
+            {showPasswordForm && (
+              <form onSubmit={handlePasswordChange}>
+                <div className="form-group">
+                  <label className="form-label">Current Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Enter your current password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData((p) => ({ ...p, currentPassword: e.target.value }))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">New Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Min 8 chars, 1 uppercase, 1 number"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData((p) => ({ ...p, newPassword: e.target.value }))}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Confirm New Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Type new password again"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData((p) => ({ ...p, confirmPassword: e.target.value }))}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={passwordLoading}
+                  style={{ width: '100%' }}
+                >
+                  {passwordLoading ? 'Changing...' : 'Update Password'}
+                </button>
+              </form>
+            )}
           </div>
 
         </div>

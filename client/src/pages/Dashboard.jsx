@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import capsuleService from '../services/capsuleService';
 import CapsuleCard from '../components/CapsuleCard';
@@ -9,6 +9,8 @@ function Dashboard() {
   const [capsules, setCapsules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     fetchCapsules();
@@ -25,9 +27,46 @@ function Dashboard() {
     }
   }
 
-  const filteredCapsules = filter === 'ALL'
-    ? capsules
-    : capsules.filter((c) => c.status === filter);
+  // Filter, search, and sort — all computed from the same data
+  const displayedCapsules = useMemo(() => {
+    let result = [...capsules];
+
+    // Status filter
+    if (filter !== 'ALL') {
+      result = result.filter((c) => c.status === filter);
+    }
+
+    // Search by title
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((c) =>
+        c.title.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort
+    switch (sortBy) {
+      case 'newest':
+        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      case 'oldest':
+        result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        break;
+      case 'unlocks-soon':
+        result.sort((a, b) => new Date(a.unlockAt) - new Date(b.unlockAt));
+        break;
+      case 'unlocks-later':
+        result.sort((a, b) => new Date(b.unlockAt) - new Date(a.unlockAt));
+        break;
+      case 'title-az':
+        result.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      default:
+        break;
+    }
+
+    return result;
+  }, [capsules, filter, searchQuery, sortBy]);
 
   const counts = {
     ALL: capsules.length,
@@ -67,13 +106,56 @@ function Dashboard() {
                 : `${capsules.length} capsule${capsules.length !== 1 ? 's' : ''} total`}
             </p>
           </div>
-
-          <Link to="/capsule/new" className="btn btn-primary">
-            + New Capsule
-          </Link>
+          <Link to="/capsule/new" className="btn btn-primary">+ New Capsule</Link>
         </div>
 
-        {/* Filters */}
+        {/* Search + Sort Bar */}
+        {capsules.length > 0 && (
+          <div style={{
+            display: 'flex',
+            gap: '0.75rem',
+            marginBottom: '1rem',
+            flexWrap: 'wrap',
+          }}>
+            {/* Search */}
+            <div style={{ flex: 1, minWidth: '200px' }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="🔍 Search capsules by title..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ padding: '0.6rem 1rem', fontSize: '0.9rem' }}
+              />
+            </div>
+
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                padding: '0.6rem 1rem',
+                background: 'var(--bg-input)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                fontSize: '0.9rem',
+                outline: 'none',
+                cursor: 'pointer',
+                colorScheme: 'dark',
+                minWidth: '160px',
+              }}
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="unlocks-soon">Unlocks soonest</option>
+              <option value="unlocks-later">Unlocks latest</option>
+              <option value="title-az">Title A–Z</option>
+            </select>
+          </div>
+        )}
+
+        {/* Filter Tabs */}
         {capsules.length > 0 && (
           <div style={{
             display: 'flex',
@@ -106,13 +188,18 @@ function Dashboard() {
         {/* Content */}
         {loading ? (
           <div className="loading-page"><div className="spinner" /></div>
-        ) : filteredCapsules.length === 0 ? (
+        ) : displayedCapsules.length === 0 ? (
           <div className="empty-state">
             {capsules.length === 0 ? (
               <>
                 <h3>🕰️ Your time capsule collection is empty</h3>
                 <p>Create your first capsule and seal a message for the future.</p>
                 <Link to="/capsule/new" className="btn btn-primary">Create Your First Capsule</Link>
+              </>
+            ) : searchQuery ? (
+              <>
+                <h3>No results for "{searchQuery}"</h3>
+                <p>Try a different search term.</p>
               </>
             ) : (
               <>
@@ -127,7 +214,7 @@ function Dashboard() {
             gap: '1rem',
             gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
           }}>
-            {filteredCapsules.map((capsule) => (
+            {displayedCapsules.map((capsule) => (
               <CapsuleCard key={capsule.id} capsule={capsule} />
             ))}
           </div>

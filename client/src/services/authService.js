@@ -1,12 +1,5 @@
 import api from './api';
 
-/**
- * Auth Service
- * 
- * All authentication-related API calls in one place.
- * Components call these functions instead of making API calls directly.
- */
-
 const authService = {
   async register(name, email, password) {
     const { data } = await api.post('/auth/register', { name, email, password });
@@ -30,6 +23,11 @@ const authService = {
 
   async refresh() {
     const { data } = await api.post('/auth/refresh');
+    return data;
+  },
+
+  async changePassword(currentPassword, newPassword) {
+    const { data } = await api.patch('/auth/change-password', { currentPassword, newPassword });
     return data;
   },
 };

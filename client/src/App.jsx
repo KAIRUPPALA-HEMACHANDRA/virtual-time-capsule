@@ -12,18 +12,11 @@ import CreateCapsule from './pages/CreateCapsule';
 import ViewCapsule from './pages/ViewCapsule';
 import EditCapsule from './pages/EditCapsule';
 import Profile from './pages/Profile';
+import NotFound from './pages/NotFound';
 
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="loading-page">
-        <div className="spinner" />
-      </div>
-    );
-  }
-
+  if (loading) return <div className="loading-page"><div className="spinner" /></div>;
   return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Landing />;
 }
 
@@ -35,17 +28,9 @@ function App() {
           position="top-right"
           toastOptions={{
             duration: 4000,
-            style: {
-              background: '#1a1a2e',
-              color: '#e0e0e0',
-              border: '1px solid #2a2a4a',
-            },
-            success: {
-              iconTheme: { primary: '#4ade80', secondary: '#1a1a2e' },
-            },
-            error: {
-              iconTheme: { primary: '#f87171', secondary: '#1a1a2e' },
-            },
+            style: { background: '#1a1a2e', color: '#e0e0e0', border: '1px solid #2a2a4a' },
+            success: { iconTheme: { primary: '#4ade80', secondary: '#1a1a2e' } },
+            error: { iconTheme: { primary: '#f87171', secondary: '#1a1a2e' } },
           }}
         />
 
@@ -57,23 +42,14 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           {/* Protected */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute><Dashboard /></ProtectedRoute>
-          } />
-          <Route path="/capsule/new" element={
-            <ProtectedRoute><CreateCapsule /></ProtectedRoute>
-          } />
-          <Route path="/capsule/:id" element={
-            <ProtectedRoute><ViewCapsule /></ProtectedRoute>
-          } />
-          <Route path="/capsule/:id/edit" element={
-            <ProtectedRoute><EditCapsule /></ProtectedRoute>
-          } />
-          <Route path="/profile" element={
-            <ProtectedRoute><Profile /></ProtectedRoute>
-          } />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/capsule/new" element={<ProtectedRoute><CreateCapsule /></ProtectedRoute>} />
+          <Route path="/capsule/:id" element={<ProtectedRoute><ViewCapsule /></ProtectedRoute>} />
+          <Route path="/capsule/:id/edit" element={<ProtectedRoute><EditCapsule /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </Router>
