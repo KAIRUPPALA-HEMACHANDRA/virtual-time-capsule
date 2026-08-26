@@ -13,6 +13,7 @@ import ViewCapsule from './pages/ViewCapsule';
 import EditCapsule from './pages/EditCapsule';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
+import Verify from './pages/Verify';
 
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
@@ -40,6 +41,7 @@ function App() {
           {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify/:id" element={<Verify />} />
 
           {/* Protected */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

@@ -40,6 +40,8 @@ model Capsule {
   isEncrypted  Boolean       @default(false) @map("is_encrypted")
   isPublic     Boolean       @default(false) @map("is_public")
 
+  contentHash  String?  @map("content_hash")
+
   creatorId    String        @map("creator_id")
   creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 

@@ -4,19 +4,17 @@ const { prisma } = require('../config/db');
 const AppError = require('../utils/AppError');
 const { getQueue } = require('../config/queue');
 const { scheduleCapsuleUnlock, cancelCapsuleUnlock } = require('../jobs/capsuleJobs');
-
-/**
- * Capsule Service — with Scheduled Delivery
- * 
- * When a capsule is created → a delayed job is scheduled
- * When a capsule is updated (new unlock date) → old job cancelled, new one scheduled
- * When a capsule is deleted → the scheduled job is cancelled
- */
+const { generateContentHash } = require('../utils/hashUtils');
 
 // ============================================
 // CREATE
 // ============================================
 async function createCapsule(userId, data, files = []) {
+  const now = new Date();
+
+  // Generate proof-of-creation hash BEFORE saving
+  const contentHash = generateContentHash(data.title, data.content || '', now);
+
   const capsule = await prisma.capsule.create({
     data: {
       title: data.title,
@@ -24,6 +22,8 @@ async function createCapsule(userId, data, files = []) {
       unlockAt: new Date(data.unlockAt),
       isPublic: data.isPublic === 'true' || data.isPublic === true,
       creatorId: userId,
+      contentHash,
+      createdAt: now, // Use the same timestamp we hashed
       attachments: {
         create: files.map((file) => ({
           filename: file.filename,
@@ -40,13 +40,12 @@ async function createCapsule(userId, data, files = []) {
     },
   });
 
-  // Schedule the unlock job
+  // Schedule unlock job
   try {
     const boss = getQueue();
     await scheduleCapsuleUnlock(boss, capsule.id, capsule.unlockAt);
   } catch (error) {
     console.error('⚠️ Failed to schedule unlock job:', error.message);
-    // Don't fail the capsule creation — the auto-unlock fallback still works
   }
 
   return capsule;
@@ -104,7 +103,6 @@ async function getCapsuleById(capsuleId, userId) {
     throw new AppError('You do not have permission to view this capsule', 403);
   }
 
-  // Auto-unlock if time passed
   if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt) {
     const updated = await prisma.capsule.update({
       where: { id: capsuleId },
@@ -117,7 +115,6 @@ async function getCapsuleById(capsuleId, userId) {
     return { ...updated, isLocked: false, timeRemaining: null, attachmentCount: updated.attachments.length };
   }
 
-  // Locked — owner sees content, others don't
   if (capsule.status === 'LOCKED') {
     return {
       ...capsule,
@@ -131,7 +128,6 @@ async function getCapsuleById(capsuleId, userId) {
     };
   }
 
-  // Mark as opened on first view
   if (capsule.status === 'UNLOCKED' && capsule.creatorId === userId) {
     const opened = await prisma.capsule.update({
       where: { id: capsuleId },
@@ -163,6 +159,13 @@ async function updateCapsule(capsuleId, userId, data) {
   if (data.unlockAt !== undefined) updateData.unlockAt = new Date(data.unlockAt);
   if (data.isPublic !== undefined) updateData.isPublic = data.isPublic === 'true' || data.isPublic === true;
 
+  // Regenerate hash if title or content changed
+  if (data.title !== undefined || data.content !== undefined) {
+    const newTitle = data.title !== undefined ? data.title : capsule.title;
+    const newContent = data.content !== undefined ? data.content : capsule.content;
+    updateData.contentHash = generateContentHash(newTitle, newContent || '', capsule.createdAt);
+  }
+
   const updated = await prisma.capsule.update({
     where: { id: capsuleId },
     data: updateData,
@@ -172,7 +175,6 @@ async function updateCapsule(capsuleId, userId, data) {
     },
   });
 
-  // If unlock date changed, reschedule the job
   if (data.unlockAt !== undefined) {
     try {
       const boss = getQueue();
@@ -198,13 +200,11 @@ async function deleteCapsule(capsuleId, userId) {
   if (!capsule) throw new AppError('Capsule not found', 404);
   if (capsule.creatorId !== userId) throw new AppError('You can only delete your own capsules', 403);
 
-  // Delete files from disk
   for (const attachment of capsule.attachments) {
     const filePath = path.join(__dirname, '../../uploads', attachment.filename);
     try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch {}
   }
 
-  // Cancel the scheduled unlock job
   try {
     const boss = getQueue();
     await cancelCapsuleUnlock(boss, capsuleId);

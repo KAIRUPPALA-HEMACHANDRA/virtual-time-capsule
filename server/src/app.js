@@ -13,6 +13,7 @@ const notFound = require('./middleware/notFound');
 // Import route files
 const authRoutes = require('./routes/authRoutes');
 const capsuleRoutes = require('./routes/capsuleRoutes');
+const verifyRoutes = require('./routes/verifyRoutes');
 
 const app = express();
 
@@ -41,7 +42,6 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // ROUTES
 // ============================================
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'success',
@@ -51,11 +51,9 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Auth routes: /api/auth/register, /api/auth/login, etc.
 app.use('/api/auth', authRoutes);
-
-// Capsule routes: /api/capsules (CRUD operations)
 app.use('/api/capsules', capsuleRoutes);
+app.use('/api/verify', verifyRoutes);
 
 // ============================================
 // ERROR HANDLING
