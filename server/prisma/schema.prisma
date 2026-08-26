@@ -41,6 +41,9 @@ model Capsule {
   isPublic     Boolean       @default(false) @map("is_public")
 
   contentHash  String?  @map("content_hash")
+  
+  sentimentScore Float?  @map("sentiment_score")
+  sentimentLabel String? @map("sentiment_label")
 
   creatorId    String        @map("creator_id")
   creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)

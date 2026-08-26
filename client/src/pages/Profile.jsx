@@ -5,6 +5,7 @@ import capsuleService from '../services/capsuleService';
 import authService from '../services/authService';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
+import EmotionTimeline from '../components/EmotionTimeline';
 
 function Profile() {
   const { user, logout } = useAuth();
@@ -254,6 +255,10 @@ function Profile() {
                 </button>
               </form>
             )}
+          </div>
+          {/* Emotion Timeline */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <EmotionTimeline />
           </div>
 
         </div>

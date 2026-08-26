@@ -5,6 +5,7 @@ const AppError = require('../utils/AppError');
 const { getQueue } = require('../config/queue');
 const { scheduleCapsuleUnlock, cancelCapsuleUnlock } = require('../jobs/capsuleJobs');
 const { generateContentHash } = require('../utils/hashUtils');
+const { analyzeSentiment } = require('../utils/sentimentUtils');
 
 // ============================================
 // CREATE
@@ -14,6 +15,8 @@ async function createCapsule(userId, data, files = []) {
 
   // Generate proof-of-creation hash BEFORE saving
   const contentHash = generateContentHash(data.title, data.content || '', now);
+  
+  const sentiment = analyzeSentiment(data.content || '');
 
   const capsule = await prisma.capsule.create({
     data: {
@@ -23,6 +26,8 @@ async function createCapsule(userId, data, files = []) {
       isPublic: data.isPublic === 'true' || data.isPublic === true,
       creatorId: userId,
       contentHash,
+      sentimentScore: sentiment.score,
+      sentimentLabel: sentiment.label,
       createdAt: now, // Use the same timestamp we hashed
       attachments: {
         create: files.map((file) => ({
