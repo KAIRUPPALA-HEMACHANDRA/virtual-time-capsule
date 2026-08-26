@@ -14,6 +14,7 @@ const notFound = require('./middleware/notFound');
 const authRoutes = require('./routes/authRoutes');
 const capsuleRoutes = require('./routes/capsuleRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
+const publicRoutes = require('./routes/publicRoutes');
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/capsules', capsuleRoutes);
 app.use('/api/verify', verifyRoutes);
+app.use('/api/public', publicRoutes);
 
 // ============================================
 // ERROR HANDLING

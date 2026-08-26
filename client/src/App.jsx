@@ -14,6 +14,8 @@ import EditCapsule from './pages/EditCapsule';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import Verify from './pages/Verify';
+import PublicWall from './pages/PublicWall';
+<Route path="/wall" element={<PublicWall />} />
 
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
