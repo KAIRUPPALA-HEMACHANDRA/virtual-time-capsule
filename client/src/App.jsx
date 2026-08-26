@@ -11,13 +11,8 @@ import Dashboard from './pages/Dashboard';
 import CreateCapsule from './pages/CreateCapsule';
 import ViewCapsule from './pages/ViewCapsule';
 import EditCapsule from './pages/EditCapsule';
+import Profile from './pages/Profile';
 
-/**
- * Smart Root Redirect
- * 
- * If the user is logged in → go to dashboard
- * If not logged in → show the landing page
- */
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
 
@@ -36,7 +31,6 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        {/* Toast notifications */}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -56,14 +50,13 @@ function App() {
         />
 
         <Routes>
-          {/* Root — landing page or dashboard */}
           <Route path="/" element={<RootRedirect />} />
 
-          {/* Public Routes */}
+          {/* Public */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes */}
+          {/* Protected */}
           <Route path="/dashboard" element={
             <ProtectedRoute><Dashboard /></ProtectedRoute>
           } />
@@ -76,8 +69,10 @@ function App() {
           <Route path="/capsule/:id/edit" element={
             <ProtectedRoute><EditCapsule /></ProtectedRoute>
           } />
+          <Route path="/profile" element={
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          } />
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

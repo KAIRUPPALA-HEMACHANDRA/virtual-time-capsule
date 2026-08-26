@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import capsuleService from '../services/capsuleService';
 import CapsuleCard from '../components/CapsuleCard';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 
 function Dashboard() {
-  const { user } = useAuth();
   const [capsules, setCapsules] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('ALL'); // ALL, LOCKED, UNLOCKED, OPENED
+  const [filter, setFilter] = useState('ALL');
 
   useEffect(() => {
     fetchCapsules();
@@ -20,19 +18,17 @@ function Dashboard() {
     try {
       const response = await capsuleService.getMyCapsules();
       setCapsules(response.data.capsules);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load capsules');
     } finally {
       setLoading(false);
     }
   }
 
-  // Filter capsules based on selected filter
   const filteredCapsules = filter === 'ALL'
     ? capsules
     : capsules.filter((c) => c.status === filter);
 
-  // Count by status
   const counts = {
     ALL: capsules.length,
     LOCKED: capsules.filter((c) => c.status === 'LOCKED').length,
@@ -52,15 +48,17 @@ function Dashboard() {
       <Navbar />
 
       <div className="container page">
-        {/* Header Section */}
+        {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '2rem',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap',
+          gap: '1rem',
         }}>
           <div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+            <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 1.8rem)', fontWeight: 700, marginBottom: '0.25rem' }}>
               My Capsules
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
@@ -75,7 +73,7 @@ function Dashboard() {
           </Link>
         </div>
 
-        {/* Filter Tabs */}
+        {/* Filters */}
         {capsules.length > 0 && (
           <div style={{
             display: 'flex',
@@ -107,18 +105,14 @@ function Dashboard() {
 
         {/* Content */}
         {loading ? (
-          <div className="loading-page">
-            <div className="spinner" />
-          </div>
+          <div className="loading-page"><div className="spinner" /></div>
         ) : filteredCapsules.length === 0 ? (
           <div className="empty-state">
             {capsules.length === 0 ? (
               <>
                 <h3>🕰️ Your time capsule collection is empty</h3>
                 <p>Create your first capsule and seal a message for the future.</p>
-                <Link to="/capsule/new" className="btn btn-primary">
-                  Create Your First Capsule
-                </Link>
+                <Link to="/capsule/new" className="btn btn-primary">Create Your First Capsule</Link>
               </>
             ) : (
               <>
@@ -131,7 +125,7 @@ function Dashboard() {
           <div style={{
             display: 'grid',
             gap: '1rem',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
           }}>
             {filteredCapsules.map((capsule) => (
               <CapsuleCard key={capsule.id} capsule={capsule} />
