@@ -59,7 +59,8 @@ model Capsule {
 
   // A capsule can have multiple file attachments
   attachments  Attachment[]
-
+  recipients   Recipient[]
+  
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
@@ -85,6 +86,21 @@ model Attachment {
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("attachments")
+}
+
+model Recipient {
+  id          String   @id @default(uuid())
+  email       String
+  
+  capsuleId   String   @map("capsule_id")
+  capsule     Capsule  @relation(fields: [capsuleId], references: [id], onDelete: Cascade)
+  
+  notified    Boolean  @default(false)
+  viewedAt    DateTime? @map("viewed_at")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("recipients")
 }
 
 // ============================================

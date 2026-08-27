@@ -35,6 +35,11 @@ async function createCapsule(userId, data, files = []) {
       sentimentScore: sentiment.score,
       sentimentLabel: sentiment.label,
       createdAt: now, // Use the same timestamp we hashed
+      recipients: {
+        create: (data.recipients ? JSON.parse(data.recipients) : []).map((email) => ({
+          email,
+        })),
+      },
       attachments: {
         create: files.map((file) => ({
           filename: file.filename,
@@ -107,6 +112,7 @@ async function getCapsuleById(capsuleId, userId) {
       creator: { select: { id: true, name: true, email: true } },
       attachments: true,
       prerequisite: { select: { id: true, title: true, status: true } },
+      recipients: true,
     },
   });
 
@@ -125,6 +131,7 @@ async function getCapsuleById(capsuleId, userId) {
       include: {
         creator: { select: { id: true, name: true, email: true } },
         attachments: true,
+        recipients: true,
       },
     });
     return { ...updated, isLocked: false, timeRemaining: null, attachmentCount: updated.attachments.length };
@@ -150,6 +157,7 @@ async function getCapsuleById(capsuleId, userId) {
       include: {
         creator: { select: { id: true, name: true, email: true } },
         attachments: true,
+        recipients: true,
       },
     });
     return { ...opened, isLocked: false, timeRemaining: null, attachmentCount: opened.attachments.length };

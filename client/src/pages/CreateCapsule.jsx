@@ -7,7 +7,7 @@ import GeoLockPicker from '../components/GeoLockPicker';
 import ChainPicker from '../components/ChainPicker';
 import EncryptionToggle from '../components/EncryptionToggle';
 import { encryptContent } from '../utils/encryption';
-
+import RecipientInput from '../components/RecipientInput';
 
 
 function CreateCapsule() {
@@ -17,6 +17,7 @@ function CreateCapsule() {
   const [files, setFiles] = useState([]);       // Actual File objects
   const [previews, setPreviews] = useState([]);   // Preview URLs for display
   const [prerequisiteId, setPrerequisiteId] = useState(null);
+  const [recipients, setRecipients] = useState([]);
 
   const [geoData, setGeoData] = useState({
     isGeoLocked: false,
@@ -140,6 +141,7 @@ function CreateCapsule() {
           ...geoData,
           prerequisiteId,
           ...encryptionMeta,
+          recipients: JSON.stringify(recipients),
         },
         files
       );
@@ -219,7 +221,10 @@ function CreateCapsule() {
                 {formData.content.length} / 10,000
               </p>
             </div>
-
+            <div className="form-group">
+              <RecipientInput recipients={recipients} onChange={setRecipients} />
+            </div>
+            
             {/* File Upload Section */}
             <div className="form-group">
               <label className="form-label">Attachments (optional)</label>

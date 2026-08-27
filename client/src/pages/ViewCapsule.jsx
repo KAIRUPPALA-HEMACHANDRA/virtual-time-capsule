@@ -242,6 +242,34 @@ function ViewCapsule() {
                   <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{capsule.isPublic ? '🌍 Public' : '🔐 Private'}</span>
                 </div>
               </div>
+              {/* Recipients */}
+              {capsule.recipients && capsule.recipients.length > 0 && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '1rem 1.25rem',
+                  background: 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-subtle)',
+                }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem' }}>
+                    📬 Recipients ({capsule.recipients.length})
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    {capsule.recipients.map((r) => (
+                      <span key={r.id} style={{
+                        padding: '0.2rem 0.65rem',
+                        background: 'rgba(96, 165, 250, 0.08)',
+                        border: '1px solid rgba(96, 165, 250, 0.15)',
+                        borderRadius: '14px',
+                        fontSize: '0.8rem',
+                        color: 'var(--accent-blue)',
+                      }}>
+                        {r.email} {r.notified ? '✅' : '⏳'}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Proof of Creation */}
               {capsule.contentHash && (
