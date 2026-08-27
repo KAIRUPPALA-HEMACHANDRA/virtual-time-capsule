@@ -5,6 +5,7 @@ import Countdown from '../components/Countdown';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import GeoUnlock from '../components/GeoUnlock';
+import ChainStatus from '../components/ChainStatus';
 
 
 function ViewCapsule() {
@@ -129,6 +130,9 @@ function ViewCapsule() {
                   </div>
                   {capsule.isGeoLocked && (
                     <GeoUnlock capsuleId={capsule.id} onUnlock={() => fetchCapsule()} />
+                  )}
+                  {capsule.prerequisiteId && (
+                    <ChainStatus capsule={capsule} />
                   )}
                 </>
               ) : (

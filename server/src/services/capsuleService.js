@@ -29,6 +29,7 @@ async function createCapsule(userId, data, files = []) {
       latitude: data.latitude ? parseFloat(data.latitude) : null,
       longitude: data.longitude ? parseFloat(data.longitude) : null,
       geoRadius: data.geoRadius ? parseInt(data.geoRadius) : 100,
+      prerequisiteId: data.prerequisiteId || null,
       contentHash,
       sentimentScore: sentiment.score,
       sentimentLabel: sentiment.label,
@@ -104,6 +105,7 @@ async function getCapsuleById(capsuleId, userId) {
     include: {
       creator: { select: { id: true, name: true, email: true } },
       attachments: true,
+      prerequisite: { select: { id: true, title: true, status: true } },
     },
   });
 
@@ -112,7 +114,10 @@ async function getCapsuleById(capsuleId, userId) {
     throw new AppError('You do not have permission to view this capsule', 403);
   }
 
-  if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt && !capsule.isGeoLocked) {
+  const prerequisiteMet = !capsule.prerequisiteId || 
+    (capsule.prerequisite && ['UNLOCKED', 'OPENED'].includes(capsule.prerequisite.status));
+  
+  if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt && !capsule.isGeoLocked && prerequisiteMet) {    
     const updated = await prisma.capsule.update({
       where: { id: capsuleId },
       data: { status: 'UNLOCKED' },

@@ -28,6 +28,9 @@ const capsuleService = {
       formData.append('longitude', capsuleData.longitude);
       formData.append('geoRadius', capsuleData.geoRadius);
     }
+    if (capsuleData.prerequisiteId) {
+      formData.append('prerequisiteId', capsuleData.prerequisiteId);
+    }
 
     // Append each file to the form data
     // The field name 'files' must match what Multer expects on the backend

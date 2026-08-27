@@ -4,6 +4,8 @@ import capsuleService from '../services/capsuleService';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import GeoLockPicker from '../components/GeoLockPicker';
+import ChainPicker from '../components/ChainPicker';
+
 
 function CreateCapsule() {
   const navigate = useNavigate();
@@ -11,6 +13,7 @@ function CreateCapsule() {
   const [isLoading, setIsLoading] = useState(false);
   const [files, setFiles] = useState([]);       // Actual File objects
   const [previews, setPreviews] = useState([]);   // Preview URLs for display
+  const [prerequisiteId, setPrerequisiteId] = useState(null);
 
   const [geoData, setGeoData] = useState({
     isGeoLocked: false,
@@ -118,6 +121,7 @@ function CreateCapsule() {
           unlockAt: unlockDate,
           isPublic: formData.isPublic,
           ...geoData,
+          prerequisiteId,
         },
         files
       );
@@ -330,6 +334,9 @@ function CreateCapsule() {
             </div>
             <div className="form-group">
               <GeoLockPicker geoData={geoData} onChange={setGeoData} />
+            </div>
+            <div className="form-group">
+              <ChainPicker selectedId={prerequisiteId} onChange={setPrerequisiteId} />
             </div>
             <div className="form-group">
               <label style={{
