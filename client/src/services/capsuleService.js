@@ -31,7 +31,10 @@ const capsuleService = {
     if (capsuleData.prerequisiteId) {
       formData.append('prerequisiteId', capsuleData.prerequisiteId);
     }
-
+    if (capsuleData.isEncrypted) {
+      formData.append('isEncrypted', 'true');
+    }
+    
     // Append each file to the form data
     // The field name 'files' must match what Multer expects on the backend
     for (const file of files) {

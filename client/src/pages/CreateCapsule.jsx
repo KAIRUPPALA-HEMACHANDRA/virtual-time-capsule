@@ -5,6 +5,9 @@ import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import GeoLockPicker from '../components/GeoLockPicker';
 import ChainPicker from '../components/ChainPicker';
+import EncryptionToggle from '../components/EncryptionToggle';
+import { encryptContent } from '../utils/encryption';
+
 
 
 function CreateCapsule() {
@@ -27,6 +30,11 @@ function CreateCapsule() {
     content: '',
     unlockAt: '',
     isPublic: false,
+  });
+
+  const [encryptionData, setEncryptionData] = useState({
+    isEncrypted: false,
+    passphrase: '',
   });
 
   function handleChange(e) {
@@ -114,17 +122,39 @@ function CreateCapsule() {
     try {
       const unlockDate = new Date(formData.unlockAt).toISOString();
 
+      let contentToSend = formData.content;
+      let encryptionMeta = {};
+
+      if (encryptionData.isEncrypted && encryptionData.passphrase) {
+        const encrypted = await encryptContent(formData.content, encryptionData.passphrase);
+        contentToSend = JSON.stringify(encrypted);
+        encryptionMeta = { isEncrypted: true };
+      }
+
       await capsuleService.createCapsule(
         {
           title: formData.title,
-          content: formData.content,
+          content: contentToSend,
           unlockAt: unlockDate,
           isPublic: formData.isPublic,
           ...geoData,
           prerequisiteId,
+          ...encryptionMeta,
         },
         files
       );
+
+      // await capsuleService.createCapsule(
+      //   {
+      //     title: formData.title,
+      //     content: formData.content,
+      //     unlockAt: unlockDate,
+      //     isPublic: formData.isPublic,
+      //     ...geoData,
+      //     prerequisiteId,
+      //   },
+      //   files
+      // );
 
       toast.success('Time capsule created and sealed! 🔒');
       navigate('/dashboard');
@@ -337,6 +367,9 @@ function CreateCapsule() {
             </div>
             <div className="form-group">
               <ChainPicker selectedId={prerequisiteId} onChange={setPrerequisiteId} />
+            </div>
+            <div className="form-group">
+              <EncryptionToggle encryptionData={encryptionData} onChange={setEncryptionData} />
             </div>
             <div className="form-group">
               <label style={{

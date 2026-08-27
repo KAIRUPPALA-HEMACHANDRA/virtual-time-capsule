@@ -25,6 +25,7 @@ async function createCapsule(userId, data, files = []) {
       unlockAt: new Date(data.unlockAt),
       isPublic: data.isPublic === 'true' || data.isPublic === true,
       creatorId: userId,
+      isEncrypted: data.isEncrypted === 'true' || data.isEncrypted === true,
       isGeoLocked: data.isGeoLocked === 'true' || data.isGeoLocked === true,
       latitude: data.latitude ? parseFloat(data.latitude) : null,
       longitude: data.longitude ? parseFloat(data.longitude) : null,

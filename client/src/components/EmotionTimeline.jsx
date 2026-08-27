@@ -75,7 +75,7 @@ function EmotionTimeline() {
   }
 
   const chartData = data.timeline.map((item) => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     score: item.score,
     mood: item.mood,
     title: item.title,
