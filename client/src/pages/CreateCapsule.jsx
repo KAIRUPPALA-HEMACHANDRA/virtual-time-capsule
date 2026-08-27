@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import capsuleService from '../services/capsuleService';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
+import GeoLockPicker from '../components/GeoLockPicker';
 
 function CreateCapsule() {
   const navigate = useNavigate();
@@ -10,6 +11,14 @@ function CreateCapsule() {
   const [isLoading, setIsLoading] = useState(false);
   const [files, setFiles] = useState([]);       // Actual File objects
   const [previews, setPreviews] = useState([]);   // Preview URLs for display
+
+  const [geoData, setGeoData] = useState({
+    isGeoLocked: false,
+    latitude: '',
+    longitude: '',
+    geoRadius: 100,
+  });
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -108,6 +117,7 @@ function CreateCapsule() {
           content: formData.content,
           unlockAt: unlockDate,
           isPublic: formData.isPublic,
+          ...geoData,
         },
         files
       );
@@ -302,7 +312,6 @@ function CreateCapsule() {
                 </div>
               )}
             </div>
-
             <div className="form-group">
               <label className="form-label">Unlock Date & Time</label>
               <input
@@ -319,7 +328,9 @@ function CreateCapsule() {
                 The capsule will be sealed until this date. Nobody can read it before then.
               </p>
             </div>
-
+            <div className="form-group">
+              <GeoLockPicker geoData={geoData} onChange={setGeoData} />
+            </div>
             <div className="form-group">
               <label style={{
                 display: 'flex',

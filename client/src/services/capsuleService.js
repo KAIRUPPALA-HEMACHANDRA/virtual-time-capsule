@@ -22,6 +22,12 @@ const capsuleService = {
     if (capsuleData.isPublic !== undefined) {
       formData.append('isPublic', capsuleData.isPublic);
     }
+    if (capsuleData.isGeoLocked) {
+      formData.append('isGeoLocked', capsuleData.isGeoLocked);
+      formData.append('latitude', capsuleData.latitude);
+      formData.append('longitude', capsuleData.longitude);
+      formData.append('geoRadius', capsuleData.geoRadius);
+    }
 
     // Append each file to the form data
     // The field name 'files' must match what Multer expects on the backend

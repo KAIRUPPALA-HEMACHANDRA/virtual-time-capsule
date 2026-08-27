@@ -44,6 +44,11 @@ model Capsule {
   
   sentimentScore Float?  @map("sentiment_score")
   sentimentLabel String? @map("sentiment_label")
+  
+  isGeoLocked  Boolean  @default(false) @map("is_geo_locked")
+  latitude     Float?
+  longitude    Float?
+  geoRadius    Int?     @default(100) @map("geo_radius")
 
   creatorId    String        @map("creator_id")
   creator      User          @relation(fields: [creatorId], references: [id], onDelete: Cascade)

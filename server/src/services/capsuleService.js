@@ -25,6 +25,10 @@ async function createCapsule(userId, data, files = []) {
       unlockAt: new Date(data.unlockAt),
       isPublic: data.isPublic === 'true' || data.isPublic === true,
       creatorId: userId,
+      isGeoLocked: data.isGeoLocked === 'true' || data.isGeoLocked === true,
+      latitude: data.latitude ? parseFloat(data.latitude) : null,
+      longitude: data.longitude ? parseFloat(data.longitude) : null,
+      geoRadius: data.geoRadius ? parseInt(data.geoRadius) : 100,
       contentHash,
       sentimentScore: sentiment.score,
       sentimentLabel: sentiment.label,
@@ -108,7 +112,7 @@ async function getCapsuleById(capsuleId, userId) {
     throw new AppError('You do not have permission to view this capsule', 403);
   }
 
-  if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt) {
+  if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt && !capsule.isGeoLocked) {
     const updated = await prisma.capsule.update({
       where: { id: capsuleId },
       data: { status: 'UNLOCKED' },
@@ -246,10 +250,21 @@ async function deleteAttachment(attachmentId, userId) {
 // ============================================
 async function autoUnlockCapsules(userId) {
   await prisma.capsule.updateMany({
-    where: { creatorId: userId, status: 'LOCKED', unlockAt: { lte: new Date() } },
+    where: {
+      creatorId: userId,
+      status: 'LOCKED',
+      unlockAt: { lte: new Date() },
+      isGeoLocked: false,
+    },
     data: { status: 'UNLOCKED' },
   });
 }
+// async function autoUnlockCapsules(userId) {
+//   await prisma.capsule.updateMany({
+//     where: { creatorId: userId, status: 'LOCKED', unlockAt: { lte: new Date() } },
+//     data: { status: 'UNLOCKED' },
+//   });
+// }
 
 function getTimeRemaining(unlockAt) {
   const diff = new Date(unlockAt).getTime() - Date.now();
