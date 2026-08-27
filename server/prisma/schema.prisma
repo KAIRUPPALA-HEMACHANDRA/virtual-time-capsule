@@ -19,6 +19,8 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  lastActiveAt DateTime? @map("last_active_at")
+
   capsules     Capsule[]
   refreshTokens RefreshToken[]
 
@@ -52,6 +54,10 @@ model Capsule {
 
   prerequisiteId String?  @map("prerequisite_id")
   prerequisite   Capsule? @relation("CapsuleChain", fields: [prerequisiteId], references: [id], onDelete: SetNull)
+  
+  isLegacy         Boolean @default(false) @map("is_legacy")
+  legacyDays       Int?    @map("legacy_days")
+
   nextCapsules   Capsule[] @relation("CapsuleChain")
 
   creatorId    String        @map("creator_id")

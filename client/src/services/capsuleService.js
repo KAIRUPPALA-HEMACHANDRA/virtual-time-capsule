@@ -37,6 +37,10 @@ const capsuleService = {
     if (capsuleData.recipients) {
       formData.append('recipients', capsuleData.recipients);
     }
+    if (capsuleData.isLegacy) {
+      formData.append('isLegacy', 'true');
+      formData.append('legacyDays', capsuleData.legacyDays);
+    }
     
     // Append each file to the form data
     // The field name 'files' must match what Multer expects on the backend

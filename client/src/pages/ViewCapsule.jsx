@@ -241,6 +241,18 @@ function ViewCapsule() {
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Visibility</span>
                   <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{capsule.isPublic ? '🌍 Public' : '🔐 Private'}</span>
                 </div>
+                {capsule.isLegacy && (
+                  <>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Mode</span>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--accent-amber)' }}>🕊️ Legacy</span>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Triggers after</span>
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{capsule.legacyDays} days inactive</span>
+                    </div>
+                  </>
+                )}
               </div>
               {/* Recipients */}
               {capsule.recipients && capsule.recipients.length > 0 && (

@@ -3,6 +3,8 @@ const { PORT, NODE_ENV } = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const { startQueue, stopQueue } = require('./config/queue');
 const { registerWorkers } = require('./jobs/capsuleJobs');
+const { registerLegacyWorker } = require('./jobs/legacyJobs');
+
 
 /**
  * SERVER STARTUP — with Job Queue
@@ -24,6 +26,7 @@ async function startServer() {
 
     // 3. Register workers
     await registerWorkers(boss);
+    await registerLegacyWorker(boss);
 
     // 4. Start HTTP server
     const server = app.listen(PORT, () => {

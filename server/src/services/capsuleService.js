@@ -31,6 +31,8 @@ async function createCapsule(userId, data, files = []) {
       longitude: data.longitude ? parseFloat(data.longitude) : null,
       geoRadius: data.geoRadius ? parseInt(data.geoRadius) : 100,
       prerequisiteId: data.prerequisiteId || null,
+      isLegacy: data.isLegacy === 'true' || data.isLegacy === true,
+      legacyDays: data.legacyDays ? parseInt(data.legacyDays) : null,
       contentHash,
       sentimentScore: sentiment.score,
       sentimentLabel: sentiment.label,
@@ -57,13 +59,18 @@ async function createCapsule(userId, data, files = []) {
   });
 
   // Schedule unlock job
-  try {
-    const boss = getQueue();
-    await scheduleCapsuleUnlock(boss, capsule.id, capsule.unlockAt);
-  } catch (error) {
-    console.error('⚠️ Failed to schedule unlock job:', error.message);
+  // Only schedule time-based unlock for non-legacy capsules
+  if (!capsule.isLegacy) {
+    try {
+      const boss = getQueue();
+      await scheduleCapsuleUnlock(boss, capsule.id, capsule.unlockAt);
+    } catch (error) {
+      console.error('⚠️ Failed to schedule unlock job:', error.message);
+    }
   }
-
+  // } catch (error) {
+    // console.error('⚠️ Failed to schedule unlock job:', error.message);
+  // }
   return capsule;
 }
 

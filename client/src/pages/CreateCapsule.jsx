@@ -8,6 +8,8 @@ import ChainPicker from '../components/ChainPicker';
 import EncryptionToggle from '../components/EncryptionToggle';
 import { encryptContent } from '../utils/encryption';
 import RecipientInput from '../components/RecipientInput';
+import LegacyToggle from '../components/LegacyToggle';
+
 
 
 function CreateCapsule() {
@@ -36,6 +38,11 @@ function CreateCapsule() {
   const [encryptionData, setEncryptionData] = useState({
     isEncrypted: false,
     passphrase: '',
+  });
+
+  const [legacyData, setLegacyData] = useState({
+    isLegacy: false,
+    legacyDays: 180,
   });
 
   function handleChange(e) {
@@ -142,10 +149,12 @@ function CreateCapsule() {
           prerequisiteId,
           ...encryptionMeta,
           recipients: JSON.stringify(recipients),
+          ...legacyData,
         },
         files
       );
 
+      
       // await capsuleService.createCapsule(
       //   {
       //     title: formData.title,
@@ -375,6 +384,12 @@ function CreateCapsule() {
             </div>
             <div className="form-group">
               <EncryptionToggle encryptionData={encryptionData} onChange={setEncryptionData} />
+            </div>
+            <div className="form-group">
+              <LegacyToggle 
+                legacyData={legacyData} 
+                onChange={setLegacyData}
+              />
             </div>
             <div className="form-group">
               <label style={{
