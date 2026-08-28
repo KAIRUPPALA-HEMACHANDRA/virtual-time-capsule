@@ -9,7 +9,8 @@
     "db:migrate": "npx prisma migrate dev",
     "db:studio": "npx prisma studio",
     "db:seed": "node prisma/seed.js",
-    "db:reset": "npx prisma migrate reset"
+    "db:reset": "npx prisma migrate reset",
+    "test": "jest --verbose --forceExit --detectOpenHandles"
   },
   "keywords": [
     "time-capsule",
