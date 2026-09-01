@@ -4,6 +4,8 @@ import capsuleService from '../services/capsuleService';
 import CapsuleCard from '../components/CapsuleCard';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
+
 
 function Dashboard() {
   const [capsules, setCapsules] = useState([]);
@@ -11,6 +13,15 @@ function Dashboard() {
   const [filter, setFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+
+  const { notifications: socketNotifications } = useSocket();
+
+  // Re-fetch capsules when a new notification arrives (capsule unlocked)
+  useEffect(() => {
+    if (socketNotifications.length > 0 && !loading) {
+      fetchCapsules();
+    }
+  }, [socketNotifications.length]);
 
   useEffect(() => {
     fetchCapsules();

@@ -71,12 +71,27 @@ function NotificationBell() {
     } catch {}
   }
 
-  function handleNotificationClick(notification) {
+    async function handleNotificationClick(notification) {
+    if (!notification.read) {
+      try {
+        await api.patch(`/notifications/${notification.id}/read`);
+        setNotifications((prev) =>
+          prev.map((n) => n.id === notification.id ? { ...n, read: true } : n)
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch {}
+    }
     if (notification.capsuleId) {
       navigate(`/capsule/${notification.capsuleId}`);
     }
     setOpen(false);
   }
+  // function handleNotificationClick(notification) {
+  //   if (notification.capsuleId) {
+  //     navigate(`/capsule/${notification.capsuleId}`);
+  //   }
+  //   setOpen(false);
+  // }
 
   function timeAgo(date) {
     const diff = Date.now() - new Date(date).getTime();
