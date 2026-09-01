@@ -41,11 +41,19 @@ function generateAccessToken(userId) {
 // Generate a long-lived refresh token
 function generateRefreshToken(userId) {
   return jwt.sign(
-    { userId },
+    { userId, jti: Math.random().toString(36).substring(2) },
     JWT_REFRESH_SECRET,
-    { expiresIn: JWT_REFRESH_EXPIRY }  // Token expires in 7 days
+    { expiresIn: JWT_REFRESH_EXPIRY }
   );
 }
+
+// function generateRefreshToken(userId) {
+//   return jwt.sign(
+//     { userId },
+//     JWT_REFRESH_SECRET,
+//     { expiresIn: JWT_REFRESH_EXPIRY }  // Token expires in 7 days
+//   );
+// }
 
 // Verify and decode an access token
 function verifyAccessToken(token) {

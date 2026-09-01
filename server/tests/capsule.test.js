@@ -50,8 +50,7 @@ describe('Capsule Endpoints', () => {
         .field('content', 'No title capsule')
         .field('unlockAt', futureDate.toISOString());
 
-      // Should fail because title is empty
-      expect(res.status).toBe(201).toBeFalsy || expect(res.body.data?.capsule?.title).toBeFalsy;
+      expect(res.status).not.toBe(201);
     });
 
     it('should reject capsule without auth', async () => {
