@@ -270,16 +270,51 @@ async function deleteAttachment(attachmentId, userId) {
 // HELPERS
 // ============================================
 async function autoUnlockCapsules(userId) {
-  await prisma.capsule.updateMany({
+  // Find capsules that should be unlocked
+  const capsulesToUnlock = await prisma.capsule.findMany({
     where: {
       creatorId: userId,
       status: 'LOCKED',
       unlockAt: { lte: new Date() },
       isGeoLocked: false,
+      prerequisiteId: null,
     },
+    select: { id: true, title: true },
+  });
+
+  if (capsulesToUnlock.length === 0) return;
+
+  // Unlock them
+  await prisma.capsule.updateMany({
+    where: { id: { in: capsulesToUnlock.map((c) => c.id) } },
     data: { status: 'UNLOCKED' },
   });
+
+  // Create notifications for each
+  const { createNotification } = require('../services/notificationService');
+  for (const capsule of capsulesToUnlock) {
+    try {
+      await createNotification({
+        userId,
+        type: 'capsule_unlocked',
+        title: '🔓 Capsule Unlocked!',
+        message: `Your capsule "${capsule.title}" is now open and ready to read.`,
+        capsuleId: capsule.id,
+      });
+    } catch {}
+  }
 }
+// async function autoUnlockCapsules(userId) {
+//   await prisma.capsule.updateMany({
+//     where: {
+//       creatorId: userId,
+//       status: 'LOCKED',
+//       unlockAt: { lte: new Date() },
+//       isGeoLocked: false,
+//     },
+//     data: { status: 'UNLOCKED' },
+//   });
+// }
 // async function autoUnlockCapsules(userId) {
 //   await prisma.capsule.updateMany({
 //     where: { creatorId: userId, status: 'LOCKED', unlockAt: { lte: new Date() } },
