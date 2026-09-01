@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { sendCapsuleUnlockEmail, sendEmail } = require('../utils/emailService');
+const { createNotification } = require('../services/notificationService');
 
 const JOBS = {
   CAPSULE_UNLOCK: 'capsule-unlock',
@@ -35,13 +36,11 @@ async function handleCapsuleUnlock(job) {
       return;
     }
 
-    // Don't auto-unlock geo-locked capsules
     if (capsule.isGeoLocked) {
       console.log(`   📍 Capsule ${capsuleId} is geo-locked. Skipping auto-unlock.`);
       return;
     }
 
-    // Check prerequisite
     if (capsule.prerequisiteId) {
       const prereq = await prisma.capsule.findUnique({
         where: { id: capsule.prerequisiteId },
@@ -61,7 +60,16 @@ async function handleCapsuleUnlock(job) {
 
     console.log(`   ✅ Capsule "${capsule.title}" unlocked successfully!`);
 
-    // Notify creator
+    // Create real-time notification for the creator
+    await createNotification({
+      userId: capsule.creator.id,
+      type: 'capsule_unlocked',
+      title: '🔓 Capsule Unlocked!',
+      message: `Your capsule "${capsule.title}" is now open and ready to read.`,
+      capsuleId: capsule.id,
+    });
+
+    // Notify creator via email
     await sendCapsuleUnlockEmail(capsule.creator, capsule);
     console.log(`   📧 Notification sent to creator: ${capsule.creator.email}`);
 
@@ -71,23 +79,18 @@ async function handleCapsuleUnlock(job) {
         await sendEmail({
           to: recipient.email,
           subject: `🕰️ A time capsule from ${capsule.creator.name} has been opened for you!`,
-          text: `"${capsule.title}" — a time capsule addressed to you has just unlocked. The creator, ${capsule.creator.name}, sealed this message for you.`,
+          text: `"${capsule.title}" — a time capsule addressed to you has just unlocked.`,
           html: `
             <div style="font-family: system-ui, sans-serif; max-width: 500px; margin: 0 auto; background: #0a0a1a; color: #e8e8f0; padding: 2rem; border-radius: 12px;">
               <h1 style="text-align: center;">🕰️ A Capsule For You!</h1>
               <p style="text-align: center; color: #9ca3af;">${capsule.creator.name} sent you a time capsule.</p>
               <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
                 <h2 style="color: #a78bfa;">${capsule.title}</h2>
-                <p style="color: #9ca3af; font-size: 0.85rem;">
-                  Created on ${new Date(capsule.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
               </div>
-              <p style="text-align: center; color: #6b7280; font-size: 0.8rem;">Virtual Time Capsule</p>
             </div>
           `,
         });
 
-        // Mark as notified
         await prisma.recipient.update({
           where: { id: recipient.id },
           data: { notified: true },

@@ -1,5 +1,8 @@
 const app = require('./app');
-const { PORT, NODE_ENV } = require('./config/env');
+const http = require('http');
+const { initializeSocket } = require('./config/socket');
+// const { PORT, NODE_ENV } = require('./config/env');
+const { PORT, NODE_ENV, CLIENT_URL } = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const { startQueue, stopQueue } = require('./config/queue');
 const { registerWorkers } = require('./jobs/capsuleJobs');
@@ -29,8 +32,10 @@ async function startServer() {
     await registerLegacyWorker(boss);
 
     // 4. Start HTTP server
-    const server = app.listen(PORT, () => {
-      console.log(`\n🕰️  Virtual Time Capsule Server`);
+    const server = http.createServer(app);
+    initializeSocket(server, CLIENT_URL);
+
+    server.listen(PORT, () => {      console.log(`\n🕰️  Virtual Time Capsule Server`);
       console.log(`   Environment : ${NODE_ENV}`);
       console.log(`   Port        : ${PORT}`);
       console.log(`   URL         : http://localhost:${PORT}`);

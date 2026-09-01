@@ -23,6 +23,8 @@ model User {
 
   capsules     Capsule[]
   refreshTokens RefreshToken[]
+  
+  notifications Notification[]
 
   @@map("users")
 }
@@ -107,6 +109,22 @@ model Recipient {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("recipients")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  
+  capsuleId String?  @map("capsule_id")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
 }
 
 // ============================================

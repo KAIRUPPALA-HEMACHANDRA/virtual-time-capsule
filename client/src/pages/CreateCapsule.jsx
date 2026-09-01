@@ -9,7 +9,8 @@ import EncryptionToggle from '../components/EncryptionToggle';
 import { encryptContent } from '../utils/encryption';
 import RecipientInput from '../components/RecipientInput';
 import LegacyToggle from '../components/LegacyToggle';
-
+import VoiceRecorder from '../components/VoiceRecorder';
+import VideoRecorder from '../components/VideoRecorder';
 
 
 function CreateCapsule() {
@@ -359,6 +360,16 @@ function CreateCapsule() {
                   ))}
                 </div>
               )}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <VoiceRecorder onRecorded={(file) => {
+                if (file) setFiles((prev) => [...prev, file]);
+                else setFiles((prev) => prev.filter((f) => !f.name.startsWith('voice-memo')));
+              }} />
+              <VideoRecorder onRecorded={(file) => {
+                if (file) setFiles((prev) => [...prev, file]);
+                else setFiles((prev) => prev.filter((f) => !f.name.startsWith('video-message')));
+              }} />
             </div>
             <div className="form-group">
               <label className="form-label">Unlock Date & Time</label>

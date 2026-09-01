@@ -18,6 +18,7 @@ const authRoutes = require('./routes/authRoutes');
 const capsuleRoutes = require('./routes/capsuleRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
@@ -39,7 +40,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use('/api', apiLimiter);
-
+app.use('/api/notifications', notificationRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ============================================

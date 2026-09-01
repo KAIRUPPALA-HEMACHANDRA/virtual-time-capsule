@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import { SocketProvider } from './context/SocketContext';
 
 // Pages
 import Landing from './pages/Landing';
@@ -27,6 +28,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <SocketProvider>
         <Toaster
           position="top-right"
           toastOptions={{
@@ -55,6 +57,7 @@ function App() {
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+      </SocketProvider>
       </AuthProvider>
     </Router>
   );

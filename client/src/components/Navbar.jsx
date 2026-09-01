@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import NotificationBell from './NotificationBell';
+
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -70,6 +72,7 @@ function Navbar() {
             paddingLeft: '1.25rem',
             borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
           }}>
+            <NotificationBell />
             <span style={{ fontSize: '0.85rem', color: '#9ca3af' }}>{user?.name}</span>
             <button
               onClick={handleLogout}
@@ -127,6 +130,7 @@ function Navbar() {
           </Link>
           <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', margin: '0.5rem 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <NotificationBell />
             <span style={{ fontSize: '0.85rem', color: '#9ca3af' }}>{user?.name}</span>
             <button onClick={handleLogout} style={{
               padding: '0.4rem 1rem',
