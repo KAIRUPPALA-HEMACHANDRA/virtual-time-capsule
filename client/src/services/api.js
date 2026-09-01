@@ -15,8 +15,10 @@ import axios from 'axios';
  * - Error handling is centralized
  */
 
+// const api = axios.create({
+//   baseURL: '/api',           // Vite proxy forwards this to http://localhost:5000/api
 const api = axios.create({
-  baseURL: '/api',           // Vite proxy forwards this to http://localhost:5000/api
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   withCredentials: true,      // Send cookies with every request (for refresh tokens)
   headers: {
     'Content-Type': 'application/json',
