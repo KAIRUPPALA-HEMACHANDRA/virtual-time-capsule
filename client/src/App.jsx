@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { SocketProvider } from './context/SocketContext';
 
+
 // Pages
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -17,6 +18,7 @@ import NotFound from './pages/NotFound';
 import Verify from './pages/Verify';
 import PublicWall from './pages/PublicWall';
 <Route path="/wall" element={<PublicWall />} />
+import Invitations from './pages/Invitations';
 
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
@@ -53,6 +55,7 @@ function App() {
           <Route path="/capsule/:id" element={<ProtectedRoute><ViewCapsule /></ProtectedRoute>} />
           <Route path="/capsule/:id/edit" element={<ProtectedRoute><EditCapsule /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />

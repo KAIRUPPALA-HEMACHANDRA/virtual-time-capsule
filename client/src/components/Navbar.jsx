@@ -60,6 +60,9 @@ function Navbar() {
           <Link to="/capsule/new" style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
             + Create
           </Link>
+          <Link to="/invitations" style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
+            📬 Invitations
+          </Link>
           <Link to="/profile" style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
             Profile
           </Link>

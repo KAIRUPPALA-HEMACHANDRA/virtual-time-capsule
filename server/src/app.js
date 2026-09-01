@@ -19,6 +19,8 @@ const capsuleRoutes = require('./routes/capsuleRoutes');
 const verifyRoutes = require('./routes/verifyRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const collaborateRoutes = require('./routes/collaborateRoutes');
+
 
 const app = express();
 
@@ -42,6 +44,7 @@ app.use(morgan('dev'));
 app.use('/api', apiLimiter);
 app.use('/api/notifications', notificationRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/api/collaborate', collaborateRoutes);
 
 // ============================================
 // API DOCUMENTATION

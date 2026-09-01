@@ -25,6 +25,7 @@ model User {
   refreshTokens RefreshToken[]
   
   notifications Notification[]
+  contributions Contributor[] @relation("contributions")
 
   @@map("users")
 }
@@ -68,7 +69,8 @@ model Capsule {
   // A capsule can have multiple file attachments
   attachments  Attachment[]
   recipients   Recipient[]
-  
+  contributors Contributor[]
+
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
 
@@ -111,6 +113,10 @@ model Recipient {
   @@map("recipients")
 }
 
+
+// ============================================
+// NOTIFICATION MODEL
+// ============================================
 model Notification {
   id        String   @id @default(uuid())
   type      String
@@ -125,6 +131,26 @@ model Notification {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("notifications")
+}
+
+model Contributor {
+  id           String   @id @default(uuid())
+  
+  capsuleId    String   @map("capsule_id")
+  capsule      Capsule  @relation(fields: [capsuleId], references: [id], onDelete: Cascade)
+  
+  userId       String?  @map("user_id")
+  user         User?    @relation("contributions", fields: [userId], references: [id], onDelete: SetNull)
+  
+  email        String
+  status       String   @default("pending")
+  content      String?
+  
+  invitedAt    DateTime @default(now()) @map("invited_at")
+  joinedAt     DateTime? @map("joined_at")
+
+  @@unique([capsuleId, email])
+  @@map("contributors")
 }
 
 // ============================================

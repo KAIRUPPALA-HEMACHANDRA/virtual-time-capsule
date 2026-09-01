@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import GeoUnlock from '../components/GeoUnlock';
 import ChainStatus from '../components/ChainStatus';
 import DecryptModal from '../components/DecryptModal';
+import CollaboratorSection from '../components/CollaboratorSection';
 
 
 function ViewCapsule() {
@@ -284,6 +285,11 @@ function ViewCapsule() {
               )}
 
               {/* Proof of Creation */}
+              <CollaboratorSection
+                capsuleId={capsule.id}
+                isCreator={capsule.creator?.id === capsule.creatorId}
+                isLocked={isLocked}
+              />
               {capsule.contentHash && (
                 <Link to={`/verify/${capsule.id}`} style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
