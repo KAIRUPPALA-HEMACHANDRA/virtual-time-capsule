@@ -304,6 +304,25 @@ function ViewCapsule() {
                   🛡️ View Proof-of-Creation Certificate
                 </Link>
               )}
+              {capsule.shareToken && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/shared/${capsule.shareToken}`);
+                    toast.success('Share link copied! 📋');
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                    marginTop: '0.5rem', padding: '0.85rem', width: '100%',
+                    background: 'rgba(96, 165, 250, 0.06)', border: '1px solid rgba(96, 165, 250, 0.15)',
+                    borderRadius: 'var(--radius-sm)', color: 'var(--accent-blue)', fontSize: '0.9rem',
+                    fontWeight: 500, cursor: 'pointer', transition: 'all 0.2s',
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(96, 165, 250, 0.12)'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'rgba(96, 165, 250, 0.06)'}
+                >
+                  🔗 Copy Share Link
+                </button>
+              )}
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>

@@ -41,6 +41,12 @@ const capsuleService = {
       formData.append('isLegacy', 'true');
       formData.append('legacyDays', capsuleData.legacyDays);
     }
+    if (capsuleData.isAnonymous) {
+      formData.append('isAnonymous', 'true');
+    }
+    if (capsuleData.selfDestructAfterRead) {
+      formData.append('selfDestructAfterRead', 'true');
+    }
     
     // Append each file to the form data
     // The field name 'files' must match what Multer expects on the backend

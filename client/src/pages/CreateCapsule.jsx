@@ -149,6 +149,8 @@ function CreateCapsule() {
           ...geoData,
           prerequisiteId,
           ...encryptionMeta,
+          isAnonymous: formData.isAnonymous,
+          selfDestructAfterRead: formData.selfDestructAfterRead,
           recipients: JSON.stringify(recipients),
           ...legacyData,
         },
@@ -401,6 +403,23 @@ function CreateCapsule() {
                 legacyData={legacyData} 
                 onChange={setLegacyData}
               />
+            </div>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                <input type="checkbox" name="isAnonymous" checked={formData.isAnonymous || false}
+                  onChange={(e) => setFormData(p => ({ ...p, isAnonymous: e.target.checked }))}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--accent-purple)' }} />
+                🎭 Send anonymously (hide your name from the recipient)
+              </label>
+            </div>
+
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                <input type="checkbox" name="selfDestructAfterRead" checked={formData.selfDestructAfterRead || false}
+                  onChange={(e) => setFormData(p => ({ ...p, selfDestructAfterRead: e.target.checked }))}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--accent-red)' }} />
+                💨 Self-destruct after reading (message disappears once opened)
+              </label>
             </div>
             <div className="form-group">
               <label style={{

@@ -46,6 +46,8 @@ model Capsule {
   isPublic     Boolean       @default(false) @map("is_public")
 
   contentHash  String?  @map("content_hash")
+
+  shareToken   String?  @unique @map("share_token")
   
   sentimentScore Float?  @map("sentiment_score")
   sentimentLabel String? @map("sentiment_label")

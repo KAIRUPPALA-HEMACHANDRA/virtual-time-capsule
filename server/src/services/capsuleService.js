@@ -6,6 +6,7 @@ const { getQueue } = require('../config/queue');
 const { scheduleCapsuleUnlock, cancelCapsuleUnlock } = require('../jobs/capsuleJobs');
 const { generateContentHash } = require('../utils/hashUtils');
 const { analyzeSentiment } = require('../utils/sentimentUtils');
+const { generateShareToken } = require('../utils/shareUtils');
 
 // ============================================
 // CREATE
@@ -26,6 +27,9 @@ async function createCapsule(userId, data, files = []) {
       isPublic: data.isPublic === 'true' || data.isPublic === true,
       creatorId: userId,
       isEncrypted: data.isEncrypted === 'true' || data.isEncrypted === true,
+      isAnonymous: data.isAnonymous === 'true' || data.isAnonymous === true,
+      selfDestructAfterRead: data.selfDestructAfterRead === 'true' || data.selfDestructAfterRead === true,
+      shareToken: generateShareToken(),
       isGeoLocked: data.isGeoLocked === 'true' || data.isGeoLocked === true,
       latitude: data.latitude ? parseFloat(data.latitude) : null,
       longitude: data.longitude ? parseFloat(data.longitude) : null,

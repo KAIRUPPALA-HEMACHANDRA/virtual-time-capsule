@@ -19,6 +19,10 @@ import Verify from './pages/Verify';
 import PublicWall from './pages/PublicWall';
 <Route path="/wall" element={<PublicWall />} />
 import Invitations from './pages/Invitations';
+import SharedCapsule from './pages/SharedCapsule';
+
+
+
 
 function RootRedirect() {
   const { isAuthenticated, loading } = useAuth();
@@ -48,6 +52,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify/:id" element={<Verify />} />
+          <Route path="/shared/:token" element={<SharedCapsule />} />
 
           {/* Protected */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

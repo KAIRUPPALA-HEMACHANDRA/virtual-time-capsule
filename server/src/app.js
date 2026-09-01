@@ -13,6 +13,7 @@ const { trackActivity } = require('./middleware/activityTracker');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
 
+
 // Import route files
 const authRoutes = require('./routes/authRoutes');
 const capsuleRoutes = require('./routes/capsuleRoutes');
@@ -20,6 +21,7 @@ const verifyRoutes = require('./routes/verifyRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const collaborateRoutes = require('./routes/collaborateRoutes');
+const shareRoutes = require('./routes/shareRoutes');
 
 
 const app = express();
@@ -45,6 +47,7 @@ app.use('/api', apiLimiter);
 app.use('/api/notifications', notificationRoutes);
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/collaborate', collaborateRoutes);
+app.use('/api/shared', shareRoutes);
 
 // ============================================
 // API DOCUMENTATION
