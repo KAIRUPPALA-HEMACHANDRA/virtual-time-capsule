@@ -274,7 +274,6 @@ async function deleteAttachment(attachmentId, userId) {
 // HELPERS
 // ============================================
 async function autoUnlockCapsules(userId) {
-  // Find capsules that should be unlocked
   const capsulesToUnlock = await prisma.capsule.findMany({
     where: {
       creatorId: userId,
@@ -283,19 +282,24 @@ async function autoUnlockCapsules(userId) {
       isGeoLocked: false,
       prerequisiteId: null,
     },
-    select: { id: true, title: true },
+    select: { id: true, title: true, content: true, createdAt: true },
   });
-
+  console.log(`🔍 Auto-unlock check: found ${capsulesToUnlock.length} capsules to unlock`);
   if (capsulesToUnlock.length === 0) return;
 
-  // Unlock them
   await prisma.capsule.updateMany({
     where: { id: { in: capsulesToUnlock.map((c) => c.id) } },
     data: { status: 'UNLOCKED' },
   });
 
-  // Create notifications for each
   const { createNotification } = require('../services/notificationService');
+  const { sendCapsuleUnlockEmail } = require('../utils/emailService');
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true },
+  });
+
   for (const capsule of capsulesToUnlock) {
     try {
       await createNotification({
@@ -305,9 +309,83 @@ async function autoUnlockCapsules(userId) {
         message: `Your capsule "${capsule.title}" is now open and ready to read.`,
         capsuleId: capsule.id,
       });
-    } catch {}
+      await sendCapsuleUnlockEmail(user, capsule);
+
+      // Notify recipients via email
+      const recipients = await prisma.recipient.findMany({
+        where: { capsuleId: capsule.id, notified: false },
+      });
+
+      const { sendEmail } = require('../utils/emailService');
+      for (const recipient of recipients) {
+        try {
+          const shareToken = await prisma.capsule.findUnique({
+            where: { id: capsule.id },
+            select: { shareToken: true },
+          });
+
+          await sendEmail({
+            to: recipient.email,
+            subject: `🕰️ A time capsule has been opened for you!`,
+            text: `"${capsule.title}" — a time capsule addressed to you has just unlocked.`,
+            html: `
+              <div style="font-family: system-ui; max-width: 500px; margin: 0 auto; background: #0a0a1a; color: #e8e8f0; padding: 2rem; border-radius: 12px;">
+                <h1 style="text-align: center;">🕰️ A Capsule For You!</h1>
+                <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                  <h2 style="color: #a78bfa;">${capsule.title}</h2>
+                </div>
+                ${shareToken?.shareToken ? `<p style="text-align:center;"><a href="http://localhost:5173/shared/${shareToken.shareToken}" style="color:#a78bfa;">Click here to view</a></p>` : ''}
+              </div>
+            `,
+          });
+
+          await prisma.recipient.update({
+            where: { id: recipient.id },
+            data: { notified: true },
+          });
+        } catch {}
+      }
+    } catch (err) { console.error('Auto-unlock error:', err.message); }
+    //   await sendCapsuleUnlockEmail(user, capsule);
+    // } catch (err) { console.error('Auto-unlock error:', err.message); }
   }
 }
+
+// async function autoUnlockCapsules(userId) {
+//   // Find capsules that should be unlocked
+//   const capsulesToUnlock = await prisma.capsule.findMany({
+//     where: {
+//       creatorId: userId,
+//       status: 'LOCKED',
+//       unlockAt: { lte: new Date() },
+//       isGeoLocked: false,
+//       prerequisiteId: null,
+//     },
+//     select: { id: true, title: true },
+//   });
+
+//   if (capsulesToUnlock.length === 0) return;
+
+//   // Unlock them
+//   await prisma.capsule.updateMany({
+//     where: { id: { in: capsulesToUnlock.map((c) => c.id) } },
+//     data: { status: 'UNLOCKED' },
+//   });
+
+//   // Create notifications for each
+//   const { createNotification } = require('../services/notificationService');
+//   for (const capsule of capsulesToUnlock) {
+//     try {
+//       await createNotification({
+//         userId,
+//         type: 'capsule_unlocked',
+//         title: '🔓 Capsule Unlocked!',
+//         message: `Your capsule "${capsule.title}" is now open and ready to read.`,
+//         capsuleId: capsule.id,
+//       });
+//     } catch {}
+//   }
+// }
 // async function autoUnlockCapsules(userId) {
 //   await prisma.capsule.updateMany({
 //     where: {

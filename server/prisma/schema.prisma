@@ -48,6 +48,10 @@ model Capsule {
   contentHash  String?  @map("content_hash")
 
   shareToken   String?  @unique @map("share_token")
+
+  isAnonymous          Boolean @default(false) @map("is_anonymous")
+  selfDestructAfterRead Boolean @default(false) @map("self_destruct_after_read")
+  reactions            String?
   
   sentimentScore Float?  @map("sentiment_score")
   sentimentLabel String? @map("sentiment_label")
