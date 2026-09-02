@@ -161,7 +161,7 @@ async function getCapsuleById(capsuleId, userId) {
     };
   }
 
-  if (capsule.status === 'UNLOCKED' && capsule.creatorId === userId) {
+  if (capsule.status === 'UNLOCKED' && capsule.creatorId === userId && !capsule.selfDestructAfterRead) {
     const opened = await prisma.capsule.update({
       where: { id: capsuleId },
       data: { status: 'OPENED', openedAt: new Date() },

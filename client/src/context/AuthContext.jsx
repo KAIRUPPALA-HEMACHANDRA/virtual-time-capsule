@@ -41,9 +41,15 @@ export function AuthProvider({ children }) {
       const response = await authService.getMe();
       setUser(response.data.user);
     } catch {
-      // Token is invalid or expired — clear it
-      localStorage.removeItem('accessToken');
-      setUser(null);
+      // Retry once after 3 seconds (Render cold start)
+      try {
+        await new Promise((r) => setTimeout(r, 3000));
+        const response = await authService.getMe();
+        setUser(response.data.user);
+      } catch {
+        localStorage.removeItem('accessToken');
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }

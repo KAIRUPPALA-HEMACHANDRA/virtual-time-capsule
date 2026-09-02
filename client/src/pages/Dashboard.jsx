@@ -25,7 +25,16 @@ function Dashboard() {
 
   useEffect(() => {
     fetchCapsules();
+
+    // Auto-refresh capsules every 30 seconds
+    const interval = setInterval(() => {
+      fetchCapsules();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
+  // useEffect(() => {
+  //   fetchCapsules();
+  // }, []);
 
   async function fetchCapsules() {
     try {
