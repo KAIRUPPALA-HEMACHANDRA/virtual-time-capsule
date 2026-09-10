@@ -79,6 +79,35 @@ function CapsuleCard({ capsule }) {
         )
       )}
 
+      {/* Feature badges */}
+      {(capsule.isGeoLocked || capsule.isEncrypted || capsule.isLegacy || capsule.prerequisiteId || capsule.isAnonymous || capsule.selfDestructAfterRead) && (
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.4rem',
+          marginBottom: '0.75rem',
+        }}>
+          {capsule.isGeoLocked && (
+            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: 'rgba(96, 165, 250, 0.1)', color: '#60a5fa' }}>📍 Geo-locked</span>
+          )}
+          {capsule.isEncrypted && (
+            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: 'rgba(167, 139, 250, 0.1)', color: '#a78bfa' }}>🔐 Encrypted</span>
+          )}
+          {capsule.isLegacy && (
+            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: 'rgba(251, 146, 60, 0.1)', color: '#fb923c' }}>🕊️ Legacy</span>
+          )}
+          {capsule.prerequisiteId && (
+            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: 'rgba(45, 212, 191, 0.1)', color: '#2dd4bf' }}>🔗 Chained</span>
+          )}
+          {capsule.isAnonymous && (
+            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: 'rgba(156, 163, 175, 0.1)', color: '#9ca3af' }}>🎭 Anonymous</span>
+          )}
+          {capsule.selfDestructAfterRead && (
+            <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '12px', background: 'rgba(248, 113, 113, 0.1)', color: '#f87171' }}>💥 Self-destruct</span>
+          )}
+        </div>
+      )}
+
       {/* Bottom row: dates + attachment count */}
       <div style={{
         display: 'flex',
