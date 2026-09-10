@@ -6,11 +6,14 @@ import authService from '../services/authService';
 import Navbar from '../components/Navbar';
 import toast from 'react-hot-toast';
 import EmotionTimeline from '../components/EmotionTimeline';
+import CalendarHeatmap from '../components/CalendarHeatmap';
+import GeoMap from '../components/GeoMap';
 
 function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, locked: 0, unlocked: 0, opened: 0 });
+  const [capsules, setCapsules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -28,6 +31,7 @@ function Profile() {
     try {
       const response = await capsuleService.getMyCapsules();
       const capsules = response.data.capsules;
+      setCapsules(capsules);
       setStats({
         total: capsules.length,
         locked: capsules.filter((c) => c.status === 'LOCKED').length,
@@ -259,6 +263,16 @@ function Profile() {
           {/* Emotion Timeline */}
           <div style={{ marginTop: '1.5rem' }}>
             <EmotionTimeline />
+          </div>
+
+          {/* Activity Heatmap */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <CalendarHeatmap capsules={capsules} />
+          </div>
+
+          {/* Geo-Locked Capsule Map */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <GeoMap capsules={capsules} />
           </div>
 
         </div>
