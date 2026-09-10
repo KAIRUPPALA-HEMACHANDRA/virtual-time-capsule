@@ -15,6 +15,7 @@ const viewSharedCapsule = catchAsync(async (req, res) => {
     include: {
       creator: { select: { name: true } },
       attachments: true,
+      prerequisite: { select: { status: true } },
       contributors: {
         select: {
           content: true,
@@ -48,11 +49,33 @@ const viewSharedCapsule = catchAsync(async (req, res) => {
     });
   }
 
-  // Auto-unlock if time has passed and not geo-locked
-  if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt && !capsule.isGeoLocked) {
+  // Check if prerequisite chain is not met
+  const prerequisiteMet = !capsule.prerequisiteId ||
+    (capsule.prerequisite && ['UNLOCKED', 'OPENED'].includes(capsule.prerequisite.status));
+
+  // Auto-unlock if time has passed, not geo-locked, and prerequisite met
+  if (capsule.status === 'LOCKED' && new Date() >= capsule.unlockAt && !capsule.isGeoLocked && prerequisiteMet) {
     await prisma.capsule.update({
       where: { id: capsule.id },
       data: { status: 'UNLOCKED' },
+    });
+  }
+
+  // If still locked (geo-locked or prerequisite not met), show locked state
+  if (capsule.status === 'LOCKED') {
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        capsule: {
+          title: capsule.title,
+          status: 'LOCKED',
+          unlockAt: capsule.unlockAt,
+          createdAt: capsule.createdAt,
+          creatorName: capsule.isAnonymous ? 'Anonymous' : capsule.creator.name,
+          isAnonymous: capsule.isAnonymous || false,
+          isLocked: true,
+        },
+      },
     });
   }
 
