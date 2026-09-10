@@ -37,15 +37,8 @@ module.exports = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
 
-  // Email
-  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
-  SMTP_PORT: parseInt(process.env.SMTP_PORT, 10) || 587,
-  SMTP_USER: process.env.SMTP_USER || '',
-  SMTP_PASS: process.env.SMTP_PASS || '',
+  // Email (Brevo HTTP API)
+  BREVO_API_KEY: process.env.BREVO_API_KEY || '',
   FROM_EMAIL: process.env.FROM_EMAIL || '',
   FROM_NAME: process.env.FROM_NAME || 'Virtual Time Capsule',
-
-  // Redis
-  REDIS_HOST: process.env.REDIS_HOST || 'localhost',
-  REDIS_PORT: parseInt(process.env.REDIS_PORT, 10) || 6379,
 };

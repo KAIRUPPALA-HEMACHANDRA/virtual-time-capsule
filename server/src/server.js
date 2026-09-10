@@ -1,7 +1,6 @@
 const app = require('./app');
 const http = require('http');
 const { initializeSocket } = require('./config/socket');
-// const { PORT, NODE_ENV } = require('./config/env');
 const { PORT, NODE_ENV, CLIENT_URL } = require('./config/env');
 const { connectDB, disconnectDB } = require('./config/db');
 const { startQueue, stopQueue } = require('./config/queue');

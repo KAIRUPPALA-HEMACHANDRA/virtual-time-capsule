@@ -106,10 +106,8 @@ async function handleCapsuleUnlock(job) {
 }
 
 async function scheduleCapsuleUnlock(boss, capsuleId, unlockAt) {
-  // const jobId = `unlock-${capsuleId}`;
-  const jobId = capsuleId;
   await boss.send(JOBS.CAPSULE_UNLOCK, { capsuleId }, {
-    id: jobId,
+    id: capsuleId,
     startAfter: new Date(unlockAt),
     retryLimit: 3,
     retryDelay: 60,
@@ -118,9 +116,7 @@ async function scheduleCapsuleUnlock(boss, capsuleId, unlockAt) {
 }
 
 async function cancelCapsuleUnlock(boss, capsuleId) {
-  // const jobId = `unlock-${capsuleId}`;
-  const jobId = capsuleId;
-  try { await boss.cancel(jobId); console.log(`🚫 Cancelled unlock job for capsule ${capsuleId}`); } catch {}
+  try { await boss.cancel(capsuleId); console.log(`🚫 Cancelled unlock job for capsule ${capsuleId}`); } catch {}
 }
 
 module.exports = { JOBS, registerWorkers, scheduleCapsuleUnlock, cancelCapsuleUnlock };

@@ -47,14 +47,6 @@ function generateRefreshToken(userId) {
   );
 }
 
-// function generateRefreshToken(userId) {
-//   return jwt.sign(
-//     { userId },
-//     JWT_REFRESH_SECRET,
-//     { expiresIn: JWT_REFRESH_EXPIRY }  // Token expires in 7 days
-//   );
-// }
-
 // Verify and decode an access token
 function verifyAccessToken(token) {
   return jwt.verify(token, JWT_ACCESS_SECRET);
