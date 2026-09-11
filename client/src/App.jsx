@@ -17,7 +17,6 @@ import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import Verify from './pages/Verify';
 import PublicWall from './pages/PublicWall';
-<Route path="/wall" element={<PublicWall />} />
 import Invitations from './pages/Invitations';
 import SharedCapsule from './pages/SharedCapsule';
 
@@ -53,6 +52,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify/:id" element={<Verify />} />
           <Route path="/shared/:token" element={<SharedCapsule />} />
+          <Route path="/wall" element={<PublicWall />} />
 
           {/* Protected */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
