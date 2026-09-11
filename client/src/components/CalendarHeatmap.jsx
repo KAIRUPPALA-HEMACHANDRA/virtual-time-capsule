@@ -47,18 +47,27 @@ function CalendarHeatmap({ capsules = [] }) {
       dateCounts[date] = (dateCounts[date] || 0) + 1;
     });
 
-    // Build grid starting from (WEEKS * 7) days ago
+    // Build grid that always includes today
     const today = new Date();
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (WEEKS * 7 - 1));
-    // Align to the most recent Sunday before or on startDate
-    startDate.setDate(startDate.getDate() - startDate.getDay());
+    today.setHours(23, 59, 59, 999);
+
+    // End of current week (Saturday)
+    const endSaturday = new Date(today);
+    endSaturday.setDate(today.getDate() + (6 - today.getDay()));
+
+    // Start from WEEKS weeks before the end, aligned to Sunday
+    const startDate = new Date(endSaturday);
+    startDate.setDate(endSaturday.getDate() - (WEEKS * 7 - 1));
+
+    // Compute actual weeks from startDate to endSaturday
+    const totalDays = Math.ceil((endSaturday - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    const actualWeeks = Math.ceil(totalDays / 7);
 
     const grid = [];
     const months = [];
     let lastMonth = -1;
 
-    for (let week = 0; week < WEEKS; week++) {
+    for (let week = 0; week < actualWeeks; week++) {
       const weekDays = [];
       for (let day = 0; day < DAYS; day++) {
         const cellDate = new Date(startDate);
@@ -113,7 +122,7 @@ function CalendarHeatmap({ capsules = [] }) {
     );
   }
 
-  const svgWidth = WEEKS * TOTAL + 30;
+  const svgWidth = grid.length * TOTAL + 30;
   const svgHeight = DAYS * TOTAL + 20;
 
   return (
