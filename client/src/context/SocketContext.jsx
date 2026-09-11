@@ -24,7 +24,11 @@ export function SocketProvider({ children }) {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
 
-      const socket = io('http://localhost:5000', {
+      // Derive socket URL from API URL (remove /api suffix)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const socketUrl = apiUrl.replace(/\/api\/?$/, '');
+
+      const socket = io(socketUrl, {
         auth: { token },
         transports: ['websocket', 'polling'],
       });

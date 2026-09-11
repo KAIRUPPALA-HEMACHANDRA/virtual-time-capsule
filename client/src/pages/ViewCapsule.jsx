@@ -8,6 +8,8 @@ import GeoUnlock from '../components/GeoUnlock';
 import ChainStatus from '../components/ChainStatus';
 import DecryptModal from '../components/DecryptModal';
 import CollaboratorSection from '../components/CollaboratorSection';
+import { useSocket } from '../context/SocketContext';
+import api from '../services/api';
 
 
 function ViewCapsule() {
@@ -17,9 +19,11 @@ function ViewCapsule() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [decryptedContent, setDecryptedContent] = useState(null);
+  const { notifications, setNotifications, setUnreadCount } = useSocket();
 
   useEffect(() => {
     fetchCapsule();
+    markRelatedNotificationsRead();
   }, [id]);
 
   async function fetchCapsule() {
@@ -31,6 +35,19 @@ function ViewCapsule() {
       navigate('/dashboard');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function markRelatedNotificationsRead() {
+    const unread = notifications.filter((n) => n.capsuleId === id && !n.read);
+    for (const n of unread) {
+      try {
+        await api.patch(`/notifications/${n.id}/read`);
+        setNotifications((prev) =>
+          prev.map((item) => item.id === n.id ? { ...item, read: true } : item)
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch {}
     }
   }
 
