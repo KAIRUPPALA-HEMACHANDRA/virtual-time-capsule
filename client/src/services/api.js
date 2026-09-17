@@ -53,7 +53,10 @@ api.interceptors.response.use(
 
       try {
         // Try to get a new access token using the refresh token (stored in cookies)
-        const { data } = await axios.post('/api/auth/refresh');
+        // const { data } = await axios.post('/api/auth/refresh');
+        const refreshUrl = `${import.meta.env.VITE_API_URL || '/api'}/auth/refresh`;
+        const { data } = await axios.post(refreshUrl, {}, { withCredentials: true });
+
         
         // Save the new access token
         localStorage.setItem('accessToken', data.accessToken);

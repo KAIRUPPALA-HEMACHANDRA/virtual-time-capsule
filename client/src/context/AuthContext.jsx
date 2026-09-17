@@ -30,30 +30,60 @@ export function AuthProvider({ children }) {
     checkAuth();
   }, []);
 
-  async function checkAuth() {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+  // async function checkAuth() {
+  //   const token = localStorage.getItem('accessToken');
+  //   if (!token) {
+  //     setLoading(false);
+  //     return;
+  //   }
 
+  //   try {
+  //     const response = await authService.getMe();
+  //     setUser(response.data.user);
+  //   } catch {
+  //     // Retry once after 3 seconds (Render cold start)
+  //     try {
+  //       await new Promise((r) => setTimeout(r, 3000));
+  //       const response = await authService.getMe();
+  //       setUser(response.data.user);
+  //     } catch {
+  //       localStorage.removeItem('accessToken');
+  //       setUser(null);
+  //     }
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+  async function checkAuth() {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    setLoading(false);
+    return;
+  }
+
+  const delays = [3000, 6000, 10000, 15000]; // ~34s of patience, worst case
+
+  for (let attempt = 0; ; attempt++) {
     try {
       const response = await authService.getMe();
       setUser(response.data.user);
-    } catch {
-      // Retry once after 3 seconds (Render cold start)
-      try {
-        await new Promise((r) => setTimeout(r, 3000));
-        const response = await authService.getMe();
-        setUser(response.data.user);
-      } catch {
+      setLoading(false);
+      return;
+    } catch (err) {
+      const isAuthRejection = err?.response?.status === 401 || err?.response?.status === 403;
+      const outOfRetries = attempt >= delays.length;
+
+      if (isAuthRejection || outOfRetries) {
         localStorage.removeItem('accessToken');
         setUser(null);
+        setLoading(false);
+        return;
       }
-    } finally {
-      setLoading(false);
+
+      await new Promise((r) => setTimeout(r, delays[attempt]));
     }
   }
+}
 
   async function login(email, password) {
     const response = await authService.login(email, password);
