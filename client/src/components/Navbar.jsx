@@ -63,6 +63,9 @@ function Navbar() {
           <Link to="/invitations" style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
             📬 Invitations
           </Link>
+          <Link to="/wall" style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
+            🌍 Public Wall
+          </Link>
           <Link to="/profile" style={{ color: '#9ca3af', fontSize: '0.9rem' }}>
             Profile
           </Link>
@@ -130,6 +133,9 @@ function Navbar() {
           </Link>
           <Link to="/profile" onClick={() => setMenuOpen(false)} style={mobileLink}>
             👤 Profile
+          </Link>
+          <Link to="/wall" onClick={() => setMenuOpen(false)} style={mobileLink}>
+            🌍 Public Wall
           </Link>
           <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.06)', margin: '0.5rem 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
