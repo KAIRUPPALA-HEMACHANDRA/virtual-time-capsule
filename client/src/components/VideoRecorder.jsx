@@ -61,9 +61,13 @@ function VideoRecorder({ onRecorded }) {
       setVideoURL(url);
 
       const ext = mediaRecorder.mimeType.includes('webm') ? 'webm' : 'mp4';
+      const mimeType = ext === 'webm' ? 'video/webm' : 'video/mp4';
       const file = new File([blob], `video-message-${Date.now()}.${ext}`, {
-        type: mediaRecorder.mimeType,
+        type: mimeType,
       });
+      // const file = new File([blob], `video-message-${Date.now()}.${ext}`, {
+      //   type: mediaRecorder.mimeType,
+      
 
       onRecorded(file);
     };
