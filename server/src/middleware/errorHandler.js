@@ -12,6 +12,7 @@ const AppError = require('../utils/AppError');
  * No controller ever sends an error response directly - they all flow through here.
  */
 
+
 // Handle Prisma-specific errors and convert them to AppErrors
 function handlePrismaError(err) {
   // Unique constraint violation (e.g., duplicate email)

@@ -56,6 +56,8 @@ function fileFilter(req, file, cb) {
   // Some browsers report wrong MIME types for recordings — check extension as fallback
   const ext = file.originalname.split('.').pop().toLowerCase();
   const allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp3', 'wav', 'webm', 'ogg', 'mp4', 'mov', 'pdf'];
+
+  
   if (allowedMimeTypes.includes(file.mimetype) || allowedExts.includes(ext)) {
     cb(null, true);  // Accept the file
   } else {

@@ -156,6 +156,7 @@ function Navbar() {
         </div>
       )}
 
+
       {/* Responsive CSS for nav */}
       <style>{`
         @media (max-width: 768px) {
