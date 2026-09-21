@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import Navbar from '../components/Navbar';
+// import { useState, useEffect } from 'react';
+// import { Link } from 'react-router-dom';
+// import api from '../services/api';
 
 const moodEmojis = {
   happy: '😊', hopeful: '🌤️', neutral: '😐', melancholic: '🥀', sad: '😢',
 };
 
 function PublicWall() {
+  const { isAuthenticated } = useAuth();
   const [capsules, setCapsules] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +43,27 @@ function PublicWall() {
 
   return (
     <div style={{ background: 'var(--bg-primary)', minHeight: '100vh' }}>
-      {/* Nav */}
+      {/* Nav — show full navbar if logged in, simple header if not */}
+      {isAuthenticated ? <Navbar /> : (
+        <nav style={{
+          padding: '1rem 2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          maxWidth: '900px',
+          margin: '0 auto',
+        }}>
+          <Link to="/" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#e8e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>🕰️</span>
+            <span className="text-gradient">Time Capsule</span>
+          </Link>
+          <Link to="/login" className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+            Log In
+          </Link>
+        </nav>
+      )}
+
+      {/* Nav
       <nav style={{
         padding: '1rem 2rem',
         display: 'flex',
@@ -53,7 +79,7 @@ function PublicWall() {
         <Link to="/login" className="btn btn-secondary" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
           Log In
         </Link>
-      </nav>
+      </nav> */}
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem 1.5rem' }}>
         {/* Header */}
